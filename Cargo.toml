@@ -1,0 +1,17 @@
+#:schema http://json.schemastore.org/cargo
+
+[package]
+name = "rustic-exporter"
+version = "0.1.0-rc.4"
+edition = "2021"
+
+
+[dependencies]
+clap = { version = "4.5.20", features = ["derive"] }
+axum = "0.7.7"
+prometheus-client = "0.22.3"
+rustic_backend = "0.4.1"
+rustic_core = "0.5.3"
+serde = "1.0.210"
+tokio = { version = "1.40.0", features = ["full"] }
+toml = "0.8.19"

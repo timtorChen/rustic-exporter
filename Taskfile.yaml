@@ -1,0 +1,13 @@
+---
+version: "3"
+silent: true
+
+tasks:
+  pre-commit:init:
+    desc: Initiate and install dependencies
+    cmds:
+      - pre-commit install
+  pre-commit:run:
+    desc: Run all pre-commit hooks
+    cmds:
+      - pre-commit run -a

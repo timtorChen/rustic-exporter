@@ -1,0 +1,25 @@
+---
+repos:
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.8.2
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: format-source
+        name: Format sources
+        language: system
+        entry: cargo fmt
+        pass_filenames: false
+      - id: clippy
+        name: Check packages
+        entry: cargo clippy
+        language: system
+        pass_filenames: false
+  - repo: local
+    hooks:
+      - id: format-docs
+        name: Format docs
+        entry: dprint fmt
+        language: system
+        pass_filenames: false

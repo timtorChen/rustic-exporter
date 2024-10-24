@@ -1,0 +1,6 @@
+# compiled output
+target/
+
+# Miscellaneous
+.DS_Store
+lab/

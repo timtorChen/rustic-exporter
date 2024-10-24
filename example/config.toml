@@ -1,0 +1,17 @@
+[[backup]]
+repository = "./local"
+password = "test"
+
+[backup.options]
+
+[[backup]]
+repository = "opendal:s3"
+password = "test"
+
+[backup.options]
+endpoint = "https://s3.west-2.amazonaws.com"
+access_key_id = "access-key-id"
+secret_access_key = "secret-access-key"
+bucket = "bucket-name"
+root = "/"
+region = "auto"

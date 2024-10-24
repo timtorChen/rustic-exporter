@@ -1,6 +1,8 @@
 # Rustic exporter
 
-[coverage]() | [latest-version](gh-release-page) | [ghrc-container](gh-package-page)
+[![codecov](https://codecov.io/gh/timtorChen/rustic-exporter/graph/badge.svg?token=34YBCFDN6B)](https://codecov.io/gh/timtorChen/rustic-exporter)
+[![github-release](https://img.shields.io/github/v/release/timtorChen/rustic-exporter)](https://github.com/timtorChen/rustic-exporter/releases/latest)
+[![github-ghcr](https://img.shields.io/badge/_ghcr.io-download-blue)](https://github.com/timtorChen/rustic-exporter/pkgs/container/rustic-exporter)
 
 ⚠️ This project is still under development; use it with caution.
 

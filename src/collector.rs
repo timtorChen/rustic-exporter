@@ -19,6 +19,7 @@ use std::{
 struct Data {
     repository: RepositoryDetails,
     snapshots: Vec<SnapshotDetails>,
+    ready: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -75,25 +76,37 @@ impl RusticCollector {
     fn start(self) {
         tokio::spawn(async move {
             loop {
-                Self::update_data(self.clone());
+                Self::update_data(self.clone()).await;
                 tokio::time::sleep(Duration::from_secs(self.interval)).await;
             }
         });
     }
 
-    fn update_data(self) {
+    async fn update_data(self) {
         let opts = RepositoryOptions::default().password(&self.backup.password);
         let backend = BackendOptions::default()
             .repository(&self.backup.repository)
             .options(self.backup.options.clone())
             .to_backends()
             .unwrap();
-        let repository = Repository::new(&opts, &backend).unwrap().open().unwrap();
-        let snapshots = repository.get_all_snapshots().unwrap();
 
-        let mut data = self.data.lock().unwrap();
-        data.repository = repository.config().clone();
-        data.snapshots = snapshots
+        tokio::task::spawn_blocking(move || {
+            let repository = Repository::new(&opts, &backend)
+                .expect("cannot create the repository")
+                .open()
+                .expect("cannot open the repository");
+
+            let snapshots = repository
+                .get_all_snapshots()
+                .expect("cannot get snapshots");
+
+            let mut data = self.data.lock().unwrap();
+            data.repository = repository.config().clone();
+            data.snapshots = snapshots;
+            data.ready = true;
+        })
+        .await
+        .unwrap();
     }
 }
 
@@ -111,7 +124,13 @@ impl Collector for RusticCollector {
         };
 
         //-- Set metrics
+        // return if data is not ready
         let data = self.data.lock().unwrap().clone();
+        if !data.ready {
+            return Ok(());
+        }
+
+        // set repository metrics
         metrics
             .rustic_repository_info
             .get_or_create(&RepositoryInfoLabels {
@@ -120,6 +139,7 @@ impl Collector for RusticCollector {
             })
             .set(1);
 
+        // set snapshot metrics
         for snapshot in data.snapshots {
             let snapshot_info_labels = SnapshotInfoLabels {
                 repo_id: data.repository.id.to_string(),
@@ -139,16 +159,22 @@ impl Collector for RusticCollector {
                 .get_or_create(&snapshot_info_labels)
                 .set(1);
 
-            let summary = snapshot.summary.unwrap();
-            metrics
-                .rustic_snapshot_files_total
-                .get_or_create(&snapshot_labels)
-                .set(summary.total_files_processed as i64);
-
             metrics
                 .rustic_snapshot_timestamp
                 .get_or_create(&snapshot_labels)
                 .set(snapshot.time.timestamp());
+
+            // skip current iteration if snapshot summary having no data
+            if snapshot.summary.is_none() {
+                continue;
+            }
+
+            let summary = snapshot.summary.unwrap();
+
+            metrics
+                .rustic_snapshot_files_total
+                .get_or_create(&snapshot_labels)
+                .set(summary.total_files_processed as i64);
 
             metrics
                 .rustic_snapshot_size_bytes

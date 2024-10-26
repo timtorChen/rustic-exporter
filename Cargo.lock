@@ -2812,9 +2812,9 @@ dependencies = [
 
 [[package]]
 name = "rustic_core"
-version = "0.5.3"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11529c7b9a74297cb6c36f89d3746eb6a1112b8d309d5b25b338a9fedef0ff02"
+checksum = "dbc1d8eff26bc13c3b0adffc0506b087771fcb54af25ace3ac6d5914aca84d5d"
 dependencies = [
  "aes256ctr_poly1305aes",
  "anyhow",

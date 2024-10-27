@@ -12,6 +12,7 @@ use axum::{
     routing::get,
     Router,
 };
+
 use clap::Parser;
 use prometheus_client::{encoding::text::encode, registry::Registry};
 use regex::Regex;
@@ -19,6 +20,7 @@ use std::{
     env, fs,
     sync::{Arc, Mutex},
 };
+use tokio::signal;
 
 async fn metrics_handler(State(state): State<Arc<Mutex<Registry>>>) -> impl IntoResponse {
     let registry = state.lock().unwrap();
@@ -60,5 +62,33 @@ async fn main() {
     let router = Router::new()
         .route("/metrics", get(metrics_handler))
         .with_state(registry_state);
-    axum::serve(listener, router).await.unwrap();
+
+    axum::serve(listener, router)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    tokio::select! {
+        _ = ctrl_c => {
+            println!("Ctrl+C triggered")
+        },
+        _ = terminate => {
+            println!("signal SIGTERM triggered")
+        },
+    }
 }

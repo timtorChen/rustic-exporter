@@ -11,3 +11,14 @@ tasks:
     desc: Run all pre-commit hooks
     cmds:
       - pre-commit run -a
+
+  docker:build:
+    cmds:
+      - |
+          docker buildx build . \
+          --platform=linux/amd64,linux/arm64 \
+          --tag rustic-exporter:local
+      - |
+          docker buildx build . \
+          --tag rustic-exporter:local \
+          --load

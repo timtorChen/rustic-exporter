@@ -10,3 +10,5 @@ RUN cp /app/target/${RUST_MUSL_CROSS_TARGET}/release/rustic-exporter /app/rustic
 FROM --platform=$TARGETPLATFORM gcr.io/distroless/static:nonroot
 COPY --from=build --chown=nonroot:nonroot /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build --chown=nonroot:nonroot /app/rustic-exporter /rustic-exporter
+
+ENTRYPOINT [ "/rustic-exporter" ]

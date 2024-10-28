@@ -42,6 +42,7 @@ struct SnapshotInfoLabels {
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
 struct RepositoryInfoLabels {
+    name: String,
     repo_id: String,
     version: String,
 }
@@ -125,6 +126,7 @@ impl Collector for RusticCollector {
 
         //-- Set metrics
         // return if data is not ready
+        let backup_name = self.backup.name.clone();
         let data = self.data.lock().unwrap().clone();
         if !data.ready {
             return Ok(());
@@ -134,6 +136,7 @@ impl Collector for RusticCollector {
         metrics
             .rustic_repository_info
             .get_or_create(&RepositoryInfoLabels {
+                name: backup_name,
                 repo_id: data.repository.id.to_string(),
                 version: data.repository.version.to_string(),
             })

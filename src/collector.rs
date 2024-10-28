@@ -90,11 +90,10 @@ impl RusticCollector {
                 .options(this.backup.options)
                 .to_backends()
                 .unwrap();
-            let repository = Repository::new(&opts, &backend)
+            Repository::new(&opts, &backend)
                 .expect("cannot create the repository")
                 .open()
-                .expect("cannot open the repository");
-            repository
+                .expect("cannot open the repository")
         })
         .await
         .unwrap();

@@ -1,5 +1,4 @@
 [[backup]]
-name = "local"
 repository = "./local"
 password = "test"
 

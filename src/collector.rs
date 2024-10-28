@@ -11,7 +11,7 @@ use rustic_core::{
     Repository, RepositoryOptions,
 };
 use std::{
-    sync::{Arc, Mutex},
+    sync::{atomic::AtomicU64, Arc, Mutex},
     time::Duration,
 };
 
@@ -58,7 +58,7 @@ struct Metrics {
     rustic_snapshot_timestamp: Family<SnapshotLables, Gauge>,
     rustic_snapshot_backup_start_timestamp: Family<SnapshotLables, Gauge>,
     rustic_snapshot_backup_end_timestamp: Family<SnapshotLables, Gauge>,
-    rustic_snpashot_backup_duration: Family<SnapshotLables, Gauge>,
+    rustic_snpashot_backup_duration_seconds: Family<SnapshotLables, Gauge<f64, AtomicU64>>,
     rustic_snapshot_files_total: Family<SnapshotLables, Gauge>,
     rustic_snapshot_size_bytes: Family<SnapshotLables, Gauge>,
 }
@@ -119,7 +119,7 @@ impl Collector for RusticCollector {
             rustic_snapshot_timestamp: Family::default(),
             rustic_snapshot_backup_end_timestamp: Family::default(),
             rustic_snapshot_backup_start_timestamp: Family::default(),
-            rustic_snpashot_backup_duration: Family::default(),
+            rustic_snpashot_backup_duration_seconds: Family::default(),
             rustic_snapshot_files_total: Family::default(),
             rustic_snapshot_size_bytes: Family::default(),
         };
@@ -195,12 +195,13 @@ impl Collector for RusticCollector {
                 .set(summary.backup_end.timestamp_micros());
 
             metrics
-                .rustic_snpashot_backup_duration
+                .rustic_snpashot_backup_duration_seconds
                 .get_or_create(&snapshot_labels)
                 .set(
                     (summary.backup_end - summary.backup_start)
                         .num_microseconds()
-                        .unwrap(),
+                        .unwrap() as f64
+                        / (1000.0 * 1000.0),
                 );
         }
 
@@ -209,7 +210,7 @@ impl Collector for RusticCollector {
             .rustic_repository_info
             .encode(encoder.encode_descriptor(
                 "rustic_repository_info",
-                "",
+                "Repository information.",
                 None,
                 metrics.rustic_repository_info.metric_type(),
             )?)?;
@@ -217,7 +218,7 @@ impl Collector for RusticCollector {
             .rustic_snapshot_info
             .encode(encoder.encode_descriptor(
                 "rustic_snapshot_info",
-                "",
+                "Snapshot inforamation.",
                 None,
                 metrics.rustic_snapshot_info.metric_type(),
             )?)?;
@@ -225,7 +226,7 @@ impl Collector for RusticCollector {
             .rustic_snapshot_files_total
             .encode(encoder.encode_descriptor(
                 "rustic_snapshot_files_total",
-                "",
+                "Total files in a snapshot.",
                 None,
                 metrics.rustic_snapshot_files_total.metric_type(),
             )?)?;
@@ -233,7 +234,7 @@ impl Collector for RusticCollector {
             .rustic_snapshot_timestamp
             .encode(encoder.encode_descriptor(
                 "rustic_snapshot_timestamp",
-                "",
+                "Snapshot creation time in unix timestamp.",
                 None,
                 metrics.rustic_snapshot_timestamp.metric_type(),
             )?)?;
@@ -241,7 +242,7 @@ impl Collector for RusticCollector {
             .rustic_snapshot_size_bytes
             .encode(encoder.encode_descriptor(
                 "rustic_snapshot_size_bytes",
-                "",
+                "Snapshot size in bytes.",
                 None,
                 metrics.rustic_snapshot_size_bytes.metric_type(),
             )?)?;
@@ -250,7 +251,7 @@ impl Collector for RusticCollector {
             .rustic_snapshot_backup_start_timestamp
             .encode(encoder.encode_descriptor(
                 "rustic_snapshot_backup_start_timestamp",
-                "",
+                "Backup start time of a snapshot in unix timestamp.",
                 None,
                 metrics.rustic_snapshot_backup_start_timestamp.metric_type(),
             )?)?;
@@ -258,18 +259,20 @@ impl Collector for RusticCollector {
             .rustic_snapshot_backup_end_timestamp
             .encode(encoder.encode_descriptor(
                 "rustic_snapshot_backup_end_timestamp",
-                "",
+                "Backup finished time of a snapshot in unix timestamp.",
                 None,
                 metrics.rustic_snapshot_backup_end_timestamp.metric_type(),
             )?)?;
-        metrics
-            .rustic_snpashot_backup_duration
-            .encode(encoder.encode_descriptor(
-                "rustic_snpashot_backup_duration",
-                "",
+        metrics.rustic_snpashot_backup_duration_seconds.encode(
+            encoder.encode_descriptor(
+                "rustic_snpashot_backup_duration_seconds",
+                "Backup duration of a snapshot.",
                 None,
-                metrics.rustic_snpashot_backup_duration.metric_type(),
-            )?)?;
+                metrics
+                    .rustic_snpashot_backup_duration_seconds
+                    .metric_type(),
+            )?,
+        )?;
 
         Ok(())
     }

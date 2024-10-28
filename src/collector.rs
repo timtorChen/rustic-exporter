@@ -27,9 +27,17 @@ pub struct RusticCollector {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
-struct SnapshotInfoLabels {
+struct RepositoryInfoLabels {
+    repo_name: String,
     repo_id: String,
-    id: String,
+    version: String,
+}
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
+struct SnapshotInfoLabels {
+    repo_name: String,
+    repo_id: String,
+    snapshot_id: String,
     paths: String,
     hostname: String,
     username: String,
@@ -38,26 +46,21 @@ struct SnapshotInfoLabels {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
-struct RepositoryInfoLabels {
-    name: String,
+struct SnapshotLabels {
+    repo_name: String,
     repo_id: String,
-    version: String,
-}
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
-struct SnapshotLables {
-    id: String,
+    snapshot_id: String,
 }
 
 struct Metrics {
     rustic_repository_info: Family<RepositoryInfoLabels, Gauge>,
     rustic_snapshot_info: Family<SnapshotInfoLabels, Gauge>,
-    rustic_snapshot_timestamp: Family<SnapshotLables, Gauge>,
-    rustic_snapshot_backup_start_timestamp: Family<SnapshotLables, Gauge>,
-    rustic_snapshot_backup_end_timestamp: Family<SnapshotLables, Gauge>,
-    rustic_snpashot_backup_duration_seconds: Family<SnapshotLables, Gauge<f64, AtomicU64>>,
-    rustic_snapshot_files_total: Family<SnapshotLables, Gauge>,
-    rustic_snapshot_size_bytes: Family<SnapshotLables, Gauge>,
+    rustic_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_snapshot_backup_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_snapshot_backup_end_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_snpashot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_snapshot_files_total: Family<SnapshotLabels, Gauge>,
+    rustic_snapshot_size_bytes: Family<SnapshotLabels, Gauge>,
 }
 
 impl RusticCollector {
@@ -144,7 +147,7 @@ impl Collector for RusticCollector {
         metrics
             .rustic_repository_info
             .get_or_create(&RepositoryInfoLabels {
-                name: repo.name.to_string(),
+                repo_name: repo.name.to_string(),
                 repo_id: repo_config.id.to_string(),
                 version: repo_config.version.to_string(),
             })
@@ -153,16 +156,20 @@ impl Collector for RusticCollector {
         // set snapshot metrics
         for snapshot in &data.snapshots {
             let snapshot_info_labels = SnapshotInfoLabels {
+                repo_name: repo.name.to_string(),
                 repo_id: repo_config.id.to_string(),
-                id: snapshot.id.to_string(),
+                snapshot_id: snapshot.id.to_string(),
                 paths: snapshot.paths.to_string(),
                 tags: snapshot.tags.to_string(),
                 hostname: snapshot.hostname.to_string(),
                 username: snapshot.username.to_string(),
                 program_version: snapshot.program_version.to_string(),
             };
-            let snapshot_labels = SnapshotLables {
-                id: snapshot.id.to_string(),
+
+            let snapshot_labels = SnapshotLabels {
+                repo_name: repo.name.to_string(),
+                repo_id: repo_config.id.to_string(),
+                snapshot_id: snapshot.id.to_string(),
             };
 
             metrics
@@ -173,7 +180,7 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(snapshot.time.timestamp());
+                .set(snapshot.time.timestamp_micros() as f64 / (10f64.powf(6.0)));
 
             // skip current iteration if snapshot summary having no data
             if snapshot.summary.is_none() {
@@ -195,12 +202,12 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_backup_start_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_start.timestamp_micros());
+                .set(summary.backup_start.timestamp_micros() as f64 / (10f64.powf(6.0)));
 
             metrics
                 .rustic_snapshot_backup_end_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_end.timestamp_micros());
+                .set(summary.backup_end.timestamp_micros() as f64 / (10f64.powf(6.0)));
 
             metrics
                 .rustic_snpashot_backup_duration_seconds
@@ -209,7 +216,7 @@ impl Collector for RusticCollector {
                     (summary.backup_end - summary.backup_start)
                         .num_microseconds()
                         .unwrap() as f64
-                        / (1000.0 * 1000.0),
+                        / (10f64.powf(6.0)),
                 );
         }
 

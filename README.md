@@ -1,8 +1,16 @@
-# Rustic exporter
+<div align="center">
+
+# Rustic-exporter
+
+... _progressing slowly with [Look at Yourself](https://www.youtube.com/watch?v=tcq6qZOE03c)_ 🎧
 
 [![codecov](https://codecov.io/gh/timtorChen/rustic-exporter/graph/badge.svg?token=34YBCFDN6B)](https://codecov.io/gh/timtorChen/rustic-exporter)
 [![github-release](https://img.shields.io/github/v/release/timtorChen/rustic-exporter)](https://github.com/timtorChen/rustic-exporter/releases/latest)
 [![github-ghcr](https://img.shields.io/badge/_ghcr.io-download-blue)](https://github.com/timtorChen/rustic-exporter/pkgs/container/rustic-exporter)
+
+</div>
+
+---
 
 ⚠️ This project is still under development; use it with caution.
 

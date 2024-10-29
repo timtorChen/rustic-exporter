@@ -8,6 +8,8 @@
 
 Prometheus exporter for rustic/restic backup.
 
+![](./example/grafana/screenshot.png)
+
 ### Requirements
 
 The backup client should use `restic >= v0.17`, or metrics like `rustic_snapshot_size_bytes` will be dropped.

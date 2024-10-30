@@ -22,9 +22,9 @@ Prometheus exporter for rustic/restic backup.
 
 The backup client should use `restic >= v0.17`, or metrics like `rustic_snapshot_size_bytes` will be dropped.
 
-### Configuration
+### Usage
 
-The example configuration file is in [example/config.toml](example/config.toml).
+#### Command line
 
 ```
 Usage: rustic-exporter [OPTIONS] --config <CONFIG>
@@ -36,4 +36,44 @@ Options:
       --port <PORT>          Server port [default: 8080]
   -h, --help                 Print help
   -V, --version              Print version
+```
+
+#### Configuration file
+
+The configuration file is in TOML format, and follows the rustic [supported services](https://rustic.cli.rs/docs/commands/init/services.html).
+
+```toml
+# Local
+[[backup]]
+  repository = "./local"
+  password = "test"
+  [backup.options]
+
+
+# Opendal
+## S3 backend
+[[backup]]
+  repository = "opendal:s3"
+  password = "test"
+  [backup.options]
+    ## set opendal S3 backend configuration in the form of key-value
+    ## https://opendal.apache.org/docs/rust/opendal/services/struct.S3.html#configuration
+    endpoint = "https://s3.west-2.amazonaws.com"
+    access_key_id = "access-key-id"
+    secret_access_key = "secret-access-key"
+    bucket = "bucket-name"
+    root = "/"
+    region = "auto"
+
+## Google Drive backend
+[[backup]]
+  repository = "opendal:gdrive"
+  password = "test"
+  [backup.options]
+    ## set opendal GoogleDrive backend configuration
+    ## https://opendal.apache.org/docs/rust/opendal/services/struct.Gdrive.html
+    access_token = "access-token"
+    refresh_token = "refresh-token"
+    client_id = "client-id"
+    client_secret = "client-secret"
 ```

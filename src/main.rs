@@ -14,8 +14,9 @@ use axum::{
 };
 use clap::Parser;
 use prometheus_client::{encoding::text::encode, registry::Registry};
+use regex::Regex;
 use std::{
-    fs,
+    env, fs,
     sync::{Arc, Mutex},
 };
 
@@ -30,14 +31,25 @@ async fn metrics_handler(State(state): State<Arc<Mutex<Registry>>>) -> impl Into
         .unwrap()
 }
 
+fn replace_with_env_vars(input: &str) -> String {
+    let re = Regex::new(r"\$\{(.*)\}").unwrap();
+    re.replace_all(input, |caps: &regex::Captures| {
+        let var_name = caps[1].to_string();
+        env::var(var_name).unwrap_or_default()
+    })
+    .to_string()
+}
+
 #[tokio::main]
 async fn main() {
     let args = cli::Args::parse();
 
     let mut registry = Registry::default();
 
-    let file = args.config;
-    let config: Config = toml::from_str(&fs::read_to_string(file).unwrap()).unwrap();
+    let mut file_content = fs::read_to_string(args.config.clone()).unwrap();
+    file_content = replace_with_env_vars(&file_content);
+
+    let config: Config = toml::from_str(&file_content).unwrap();
     for backup in config.backups {
         let collector = collector::RusticCollector::new(backup, args.interval);
         registry.register_collector(Box::new(collector));

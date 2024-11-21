@@ -97,12 +97,11 @@ async fn main() {
 
     info!("Start server on http://{addr}");
     let server = axum::serve(listener, router);
-    let server_result;
-    if cfg!(debug_assertions) {
-        server_result = server.await;
+    let server_result = if cfg!(debug_assertions) {
+        server.await
     } else {
-        server_result = server.with_graceful_shutdown(shutdown_signal()).await;
-    }
+        server.with_graceful_shutdown(shutdown_signal()).await
+    };
 
     match server_result {
         Ok(_) => {}

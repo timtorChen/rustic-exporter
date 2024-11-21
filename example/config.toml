@@ -1,10 +1,12 @@
 [[backup]]
+name = "local"
 repository = "./local"
 password = "test"
 
 [backup.options]
 
 [[backup]]
+name = "s3-backup"
 repository = "opendal:s3"
 password = "test"
 

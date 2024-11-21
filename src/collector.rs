@@ -11,6 +11,7 @@ use rustic_core::{
 };
 use std::sync::{atomic::AtomicU64, Arc, Mutex};
 use std::time::Duration;
+use tracing::{debug, error, info, warn};
 
 #[derive(Debug, Default)]
 struct State {
@@ -85,28 +86,33 @@ impl RusticCollector {
     }
 
     async fn set_repository(self) {
-        let this = self.clone();
-        let repository = tokio::task::spawn_blocking(move || {
-            let opts = RepositoryOptions::default().password(this.backup.password);
-            let backend = BackendOptions::default()
-                .repository(this.backup.repository)
-                .options(this.backup.options)
-                .to_backends()
-                .unwrap();
-            Repository::new(&opts, &backend)
-                .expect("cannot create the repository")
-                .open()
-                .expect("cannot open the repository")
+        let opts = RepositoryOptions::default().password(self.backup.password);
+        let backend = BackendOptions::default()
+            .repository(self.backup.repository)
+            .options(self.backup.options)
+            .to_backends()
+            .unwrap();
+        let repository_result = tokio::task::spawn_blocking(move || {
+            Repository::new(&opts, &backend).unwrap().open().unwrap()
         })
-        .await
-        .unwrap();
+        .await;
+
+        let repository = match repository_result {
+            Ok(r) => r,
+            Err(e) => {
+                error!("Cannot open the repository: {}", self.backup.name);
+                panic!("Error: {}", e);
+            }
+        };
 
         let mut state = self.state.lock().unwrap();
         state.repository = Some(repository);
         state.ready = true;
+        info!("Repository is ready, repository: {}", self.backup.name);
     }
 
     async fn update_data(self) {
+        debug!("Updating metrics, repository: {}", self.backup.name);
         tokio::task::spawn_blocking(move || {
             let mut state = self.state.lock().unwrap();
             let repository = state.repository.as_ref().unwrap();
@@ -117,6 +123,10 @@ impl RusticCollector {
         })
         .await
         .unwrap();
+        debug!(
+            "Successfully updated metrics, repository: {}",
+            self.backup.name
+        );
     }
 }
 
@@ -125,8 +135,12 @@ impl Collector for RusticCollector {
         let data = self.state.lock().unwrap();
 
         //-- Set metrics
-        // return if data is not ready
+        // return if repository is not ready
         if !data.ready {
+            warn!(
+                "Repository is not ready yet, repository: {}",
+                self.backup.name
+            );
             return Ok(());
         }
 
@@ -147,7 +161,7 @@ impl Collector for RusticCollector {
         metrics
             .rustic_repository_info
             .get_or_create(&RepositoryInfoLabels {
-                repo_name: repo.name.to_string(),
+                repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),
                 version: repo_config.version.to_string(),
             })
@@ -156,7 +170,7 @@ impl Collector for RusticCollector {
         // set snapshot metrics
         for snapshot in &data.snapshots {
             let snapshot_info_labels = SnapshotInfoLabels {
-                repo_name: repo.name.to_string(),
+                repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),
                 snapshot_id: snapshot.id.to_string(),
                 paths: snapshot.paths.to_string(),
@@ -167,7 +181,7 @@ impl Collector for RusticCollector {
             };
 
             let snapshot_labels = SnapshotLabels {
-                repo_name: repo.name.to_string(),
+                repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),
                 snapshot_id: snapshot.id.to_string(),
             };
@@ -184,6 +198,11 @@ impl Collector for RusticCollector {
 
             // skip current iteration if snapshot summary having no data
             if snapshot.summary.is_none() {
+                warn!(
+                    "Snapshot summary has no data, repository: {}, snapshot_id: {} ",
+                    self.backup.name,
+                    snapshot.id.to_string()
+                );
                 continue;
             }
 

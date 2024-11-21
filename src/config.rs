@@ -10,6 +10,7 @@ pub(crate) struct Config {
 
 #[derive(Clone, Deserialize, Debug)]
 pub(crate) struct Backup {
+    pub(crate) name: String,
     pub(crate) repository: String,
     pub(crate) password: String,
     pub(crate) options: HashMap<String, String>,

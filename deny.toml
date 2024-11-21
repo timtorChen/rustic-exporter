@@ -72,7 +72,12 @@ feature-depth = 1
 ignore = [
   # FIXME!: See https://github.com/RustCrypto/RSA/issues/19#issuecomment-1822995643.
   # There is no workaround available yet.
-  "RUSTSEC-2023-0071"
+  "RUSTSEC-2023-0071",
+  # TODO: rustic_core and rustic_backend update
+  # derivative is unmaintained
+  "RUSTSEC-2024-0388",
+  # instant is unmaintained
+  "RUSTSEC-2024-0384"  
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.

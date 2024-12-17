@@ -12,6 +12,15 @@ tasks:
     cmds:
       - pre-commit run -a
 
+  cargo:check:
+    cmd: cargo check
+
+  cargo:deny:
+    cmd: cargo deny
+
+  cargo:clippy:
+    cmd: cargo clippy
+
   docker:build:
     cmds:
       - |

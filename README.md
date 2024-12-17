@@ -18,6 +18,10 @@ Prometheus exporter for rustic/restic backup.
 
 ![](./example/grafana/screenshot.png)
 
+### Background
+
+Originally I would like to craft a restic-exporter supporting multiple backup repositories because of the [issue](https://github.com/ngosang/restic-exporter/issues/26#issuecomment-1915364225). After checking the code, I found restic do not separate its library from the CLI. This forces downstream user to rely on subprocess binary calls, which causes additional maintaince overhead. So, I switched gears to rustic, and started this project.
+
 ### Requirements
 
 The backup client should use `restic >= v0.17`, or metrics like `rustic_snapshot_size_bytes` will be dropped.
@@ -30,12 +34,14 @@ The backup client should use `restic >= v0.17`, or metrics like `rustic_snapshot
 Usage: rustic-exporter [OPTIONS] --config <CONFIG>
 
 Options:
-      --interval <INTERVAL>  Frequency of metrics collection in seconds [default: 300]
-      --config <CONFIG>      Path to the configuration file
-      --host <HOST>          Server host [default: 0.0.0.0]
-      --port <PORT>          Server port [default: 8080]
-  -h, --help                 Print help
-  -V, --version              Print version
+  -i, --interval <INTERVAL>    Metrics collection frequency in seconds [default: 300]
+      --log-level <LOG_LEVEL>  Log level: debug, info, warn, error [default: info]
+  -v, --verbose                Show logs of all dependents
+  -c, --config <CONFIG>        Path to the configuration file
+      --host <HOST>            Server host [default: 0.0.0.0]
+      --port <PORT>            Server port [default: 8080]
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
 
 #### Configuration file

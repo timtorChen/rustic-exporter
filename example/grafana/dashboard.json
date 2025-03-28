@@ -1,682 +1,696 @@
 {
-  "annotations": {
-    "list": [
+   "annotations":{
+      "list":[
+         {
+            "builtIn":1,
+            "datasource":{
+               "type":"grafana",
+               "uid":"-- Grafana --"
+            },
+            "enable":true,
+            "hide":true,
+            "iconColor":"rgba(0, 211, 255, 1)",
+            "name":"Annotations & Alerts",
+            "type":"dashboard"
+         }
+      ]
+   },
+   "editable":true,
+   "fiscalYearStartMonth":0,
+   "graphTooltip":0,
+   "id":200,
+   "links":[
+      
+   ],
+   "liveNow":false,
+   "panels":[
       {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --",
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard",
-      },
-    ],
-  },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "id": 200,
-  "links": [],
-  "liveNow": false,
-  "panels": [
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}",
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds",
-          },
-          "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "auto",
-              "wrapText": false,
+         "datasource":{
+            "type":"prometheus",
+            "uid":"${prometheus}"
+         },
+         "description":"",
+         "fieldConfig":{
+            "defaults":{
+               "color":{
+                  "mode":"thresholds"
+               },
+               "custom":{
+                  "align":"center",
+                  "cellOptions":{
+                     "type":"auto",
+                     "wrapText":false
+                  },
+                  "inspect":false
+               },
+               "mappings":[
+                  
+               ],
+               "thresholds":{
+                  "mode":"absolute",
+                  "steps":[
+                     {
+                        "color":"green",
+                        "value":null
+                     },
+                     {
+                        "color":"red",
+                        "value":80
+                     }
+                  ]
+               }
             },
-            "inspect": false,
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null,
-              },
-              {
-                "color": "red",
-                "value": 80,
-              },
-            ],
-          },
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #size",
+            "overrides":[
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Value #size"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"decbytes"
+                     }
+                  ]
+               },
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Value #duration"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"dtdurations"
+                     },
+                     {
+                        "id":"custom.cellOptions",
+                        "value":{
+                           "type":"color-text",
+                           "wrapText":false
+                        }
+                     },
+                     {
+                        "id":"thresholds",
+                        "value":{
+                           "mode":"absolute",
+                           "steps":[
+                              {
+                                 "color":"light-blue",
+                                 "value":null
+                              },
+                              {
+                                 "color":"light-orange",
+                                 "value":7200
+                              }
+                           ]
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Value #last-backup-since"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"dtdurations"
+                     },
+                     {
+                        "id":"custom.cellOptions",
+                        "value":{
+                           "type":"color-text",
+                           "wrapText":false
+                        }
+                     },
+                     {
+                        "id":"thresholds",
+                        "value":{
+                           "mode":"absolute",
+                           "steps":[
+                              {
+                                 "color":"light-blue",
+                                 "value":null
+                              },
+                              {
+                                 "color":"light-orange",
+                                 "value":604800
+                              }
+                           ]
+                        }
+                     }
+                  ]
+               },
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Value #last-backup-timestamp"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"dateTimeAsIso"
+                     }
+                  ]
+               }
+            ]
+         },
+         "gridPos":{
+            "h":8,
+            "w":24,
+            "x":0,
+            "y":0
+         },
+         "id":2,
+         "options":{
+            "cellHeight":"sm",
+            "footer":{
+               "countRows":false,
+               "fields":"",
+               "reducer":[
+                  "sum"
+               ],
+               "show":false
             },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "decbytes",
-              },
-            ],
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #duration",
+            "showHeader":true,
+            "sortBy":[
+               {
+                  "desc":false,
+                  "displayName":"Last Backup Since (ago)"
+               }
+            ]
+         },
+         "pluginVersion":"11.1.5",
+         "targets":[
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(\nbottomk (1, time() - rustic_snapshot_timestamp) by (repo_id)\n) by (repo_id, repo_name)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"last-backup-since"
             },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dtdurations",
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text",
-                  "wrapText": false,
-                },
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "light-blue",
-                      "value": null,
-                    },
-                    {
-                      "color": "light-orange",
-                      "value": 7200,
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #last-backup-since",
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(\ntopk (1, rustic_snapshot_timestamp*1000) by (repo_id)\n) by (repo_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"last-backup-timestamp"
             },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dtdurations",
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text",
-                  "wrapText": false,
-                },
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "light-blue",
-                      "value": null,
-                    },
-                    {
-                      "color": "light-orange",
-                      "value": 604800,
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #last-backup-timestamp",
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"count(rustic_snapshot_info) by (repo_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"snapshots-total"
             },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dateTimeAsIso",
-              },
-            ],
-          },
-        ],
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 0,
-      },
-      "id": 2,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum",
-          ],
-          "show": false,
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "Last Backup Since (ago)",
-          },
-        ],
-      },
-      "pluginVersion": "11.1.5",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(\nbottomk (1, time() - rustic_snapshot_timestamp) by (repo_id)\n) by (repo_id, repo_name)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "last-backup-since",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(\ntopk (1, rustic_snapshot_timestamp*1000) by (repo_id)\n) by (repo_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "last-backup-timestamp",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "count(rustic_snapshot_info) by (repo_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "snapshots-total",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(rustic_snapshot_files_total) by (repo_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "files-total",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(rustic_snapshot_size_bytes) by (repo_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "size",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(rustic_snpashot_backup_duration_seconds) by (repo_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "duration",
-        },
-      ],
-      "title": "Overview",
-      "transformations": [
-        {
-          "id": "joinByField",
-          "options": {
-            "byField": "repo_id",
-            "mode": "inner",
-          },
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time 1": true,
-              "Time 2": true,
-              "Time 3": true,
-              "Time 4": true,
-              "Time 5": true,
-              "Time 6": true,
-              "Value #program-version": true,
-              "program_version": false,
-              "repo_id": true,
-              "snapshot_id": true,
-              "snapshot_id 1": true,
-              "snapshot_id 2": true,
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(rustic_snapshot_files_total) by (repo_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"files-total"
             },
-            "includeByName": {},
-            "indexByName": {
-              "Time 1": 8,
-              "Time 2": 9,
-              "Time 3": 10,
-              "Time 4": 11,
-              "Time 5": 12,
-              "Time 6": 13,
-              "Value #duration": 4,
-              "Value #files-total": 2,
-              "Value #last-backup-since": 6,
-              "Value #last-backup-timestamp": 5,
-              "Value #size": 3,
-              "Value #snapshots-total": 1,
-              "repo_id": 7,
-              "repo_name": 0,
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(rustic_snapshot_size_bytes) by (repo_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"size"
             },
-            "renameByName": {
-              "Value #duration": "Duration (avg)",
-              "Value #files-total": "Snapshot Files (avg)",
-              "Value #last-backup-since": "Last Since (ago)",
-              "Value #last-backup-timestamp": "Last Timestamp",
-              "Value #since": "Last Backup Since (ago)",
-              "Value #size": "Snapshot Size (avg)",
-              "Value #snapshots-total": "Total Snapshots",
-              "Value #timestamp": "Timestamp",
-              "name": "Repository",
-              "program_version": "Program Version",
-              "repo_id": "",
-              "repo_name": "Repository",
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(rustic_snpashot_backup_duration_seconds) by (repo_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"duration"
+            }
+         ],
+         "title":"Overview",
+         "transformations":[
+            {
+               "id":"joinByField",
+               "options":{
+                  "byField":"repo_id",
+                  "mode":"inner"
+               }
             },
-          },
-        },
-      ],
-      "type": "table",
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}",
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds",
-          },
-          "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "auto",
-            },
-            "inspect": false,
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null,
-              },
-              {
-                "color": "red",
-                "value": 80,
-              },
-            ],
-          },
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Timestamp",
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dateTimeAsIso",
-              },
-            ],
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #since",
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dtdurations",
-              },
-            ],
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #size",
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "decbytes",
-              },
-            ],
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #duration",
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "dtdurations",
-              },
-            ],
-          },
-        ],
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 24,
-        "x": 0,
-        "y": 8,
-      },
-      "id": 3,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum",
-          ],
-          "show": false,
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Timestamp",
-          },
-        ],
-      },
-      "pluginVersion": "11.1.5",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PDE3FEEA60B07F4D8",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(\n    rustic_snapshot_timestamp{repo_name=~\"$repo_name\"}*1000\n) by (snapshot_id)",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "timestamp",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PDE3FEEA60B07F4D8",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(\n    (time() - rustic_snapshot_timestamp{repo_name=~\"$repo_name\"})\n) by (snapshot_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "since",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(rustic_snapshot_info{repo_name=~\"$repo_name\"}) by (snapshot_id, program_version, paths, username)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "info",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(\n  rustic_snapshot_files_total{repo_name=~\"$repo_name\"}\n) by (snapshot_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "files",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(\n  rustic_snapshot_size_bytes{repo_name=~\"$repo_name\"}\n) by (snapshot_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "size",
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus}",
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "avg(\n  rustic_snpashot_backup_duration_seconds{repo_name=~\"$repo_name\"}\n) by (snapshot_id)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "duration",
-        },
-      ],
-      "title": "Snapshots of $repo_name",
-      "transformations": [
-        {
-          "id": "joinByField",
-          "options": {
-            "byField": "snapshot_id",
-            "mode": "inner",
-          },
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Time 1": true,
-              "Time 2": true,
-              "Time 3": true,
-              "Time 4": true,
-              "Time 5": true,
-              "Time 6": true,
-              "Value": false,
-              "Value #info": true,
-              "Value #paths": true,
-              "Value #tags": true,
-              "Value #username": true,
-              "hostname": false,
-              "instance": false,
-              "snapshot_id": true,
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Time 1": 9,
-              "Time 2": 10,
-              "Time 3": 11,
-              "Time 4": 12,
-              "Time 5": 13,
-              "Time 6": 15,
-              "Value #duration": 7,
-              "Value #files": 5,
-              "Value #info": 14,
-              "Value #since": 1,
-              "Value #size": 6,
-              "Value #timestamp": 0,
-              "paths": 3,
-              "program_version": 2,
-              "snapshot_id": 8,
-              "username": 4,
-            },
-            "renameByName": {
-              "Value": "Timestamp",
-              "Value #duration": "Duration",
-              "Value #files": "Files",
-              "Value #info": "",
-              "Value #since": "Since (ago)",
-              "Value #size": "Size",
-              "Value #timestamp": "Timestamp",
-              "paths": "Paths",
-              "program_version": "Client Version",
-              "username": "Username",
-            },
-          },
-        },
-      ],
-      "type": "table",
-    },
-  ],
-  "refresh": "",
-  "schemaVersion": 39,
-  "tags": [
-    "rustic-exporter",
-  ],
-  "templating": {
-    "list": [
-      {
-        "current": {
-          "selected": false,
-          "text": "mimir-amethyst",
-          "value": "PDE3FEEA60B07F4D8",
-        },
-        "description": "Prometheus data source",
-        "hide": 0,
-        "includeAll": false,
-        "label": "prometheus",
-        "multi": false,
-        "name": "prometheus",
-        "options": [],
-        "query": "prometheus",
-        "queryValue": "",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "type": "datasource",
+            {
+               "id":"organize",
+               "options":{
+                  "excludeByName":{
+                     "Time 1":true,
+                     "Time 2":true,
+                     "Time 3":true,
+                     "Time 4":true,
+                     "Time 5":true,
+                     "Time 6":true,
+                     "Value #program-version":true,
+                     "program_version":false,
+                     "repo_id":true,
+                     "snapshot_id":true,
+                     "snapshot_id 1":true,
+                     "snapshot_id 2":true
+                  },
+                  "includeByName":{
+                     
+                  },
+                  "indexByName":{
+                     "Time 1":8,
+                     "Time 2":9,
+                     "Time 3":10,
+                     "Time 4":11,
+                     "Time 5":12,
+                     "Time 6":13,
+                     "Value #duration":4,
+                     "Value #files-total":2,
+                     "Value #last-backup-since":6,
+                     "Value #last-backup-timestamp":5,
+                     "Value #size":3,
+                     "Value #snapshots-total":1,
+                     "repo_id":7,
+                     "repo_name":0
+                  },
+                  "renameByName":{
+                     "Value #duration":"Duration (avg)",
+                     "Value #files-total":"Snapshot Files (avg)",
+                     "Value #last-backup-since":"Last Since (ago)",
+                     "Value #last-backup-timestamp":"Last Timestamp",
+                     "Value #since":"Last Backup Since (ago)",
+                     "Value #size":"Snapshot Size (avg)",
+                     "Value #snapshots-total":"Total Snapshots",
+                     "Value #timestamp":"Timestamp",
+                     "name":"Repository",
+                     "program_version":"Program Version",
+                     "repo_id":"",
+                     "repo_name":"Repository"
+                  }
+               }
+            }
+         ],
+         "type":"table"
       },
       {
-        "current": {
-          "selected": true,
-          "text": [
-            "opendal:homelab-amethyst-vaultwarden",
-          ],
-          "value": [
-            "opendal:homelab-amethyst-vaultwarden",
-          ],
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prometheus}",
-        },
-        "definition": "label_values(rustic_repository_info, repo_name)",
-        "hide": 0,
-        "includeAll": false,
-        "label": "repository",
-        "multi": true,
-        "name": "repo_name",
-        "options": [],
-        "query": {
-          "qryType": 5,
-          "query": "label_values(rustic_repository_info, repo_name)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery",
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query",
-      },
-    ],
-  },
-  "time": {
-    "from": "now-5m",
-    "to": "now",
-  },
-  "timepicker": {
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-    ],
-  },
-  "timezone": "",
-  "title": "5. Monitor - Rustic-exporter",
-  "uid": "ee27jbiti7im8e",
-  "version": 25,
-  "weekStart": "",
+         "datasource":{
+            "type":"prometheus",
+            "uid":"${prometheus}"
+         },
+         "description":"",
+         "fieldConfig":{
+            "defaults":{
+               "color":{
+                  "mode":"thresholds"
+               },
+               "custom":{
+                  "align":"center",
+                  "cellOptions":{
+                     "type":"auto"
+                  },
+                  "inspect":false
+               },
+               "mappings":[
+                  
+               ],
+               "thresholds":{
+                  "mode":"absolute",
+                  "steps":[
+                     {
+                        "color":"green",
+                        "value":null
+                     },
+                     {
+                        "color":"red",
+                        "value":80
+                     }
+                  ]
+               }
+            },
+            "overrides":[
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Timestamp"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"dateTimeAsIso"
+                     }
+                  ]
+               },
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Value #since"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"dtdurations"
+                     }
+                  ]
+               },
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Value #size"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"decbytes"
+                     }
+                  ]
+               },
+               {
+                  "matcher":{
+                     "id":"byName",
+                     "options":"Value #duration"
+                  },
+                  "properties":[
+                     {
+                        "id":"unit",
+                        "value":"dtdurations"
+                     }
+                  ]
+               }
+            ]
+         },
+         "gridPos":{
+            "h":11,
+            "w":24,
+            "x":0,
+            "y":8
+         },
+         "id":3,
+         "options":{
+            "cellHeight":"sm",
+            "footer":{
+               "countRows":false,
+               "fields":"",
+               "reducer":[
+                  "sum"
+               ],
+               "show":false
+            },
+            "showHeader":true,
+            "sortBy":[
+               {
+                  "desc":true,
+                  "displayName":"Timestamp"
+               }
+            ]
+         },
+         "pluginVersion":"11.1.5",
+         "targets":[
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"PDE3FEEA60B07F4D8"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(\n    rustic_snapshot_timestamp{repo_name=~\"$repo_name\"}*1000\n) by (snapshot_id)",
+               "format":"table",
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"timestamp"
+            },
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"PDE3FEEA60B07F4D8"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(\n    (time() - rustic_snapshot_timestamp{repo_name=~\"$repo_name\"})\n) by (snapshot_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"since"
+            },
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(rustic_snapshot_info{repo_name=~\"$repo_name\"}) by (snapshot_id, program_version, paths, username)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"info"
+            },
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(\n  rustic_snapshot_files_total{repo_name=~\"$repo_name\"}\n) by (snapshot_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"files"
+            },
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(\n  rustic_snapshot_size_bytes{repo_name=~\"$repo_name\"}\n) by (snapshot_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"size"
+            },
+            {
+               "datasource":{
+                  "type":"prometheus",
+                  "uid":"${prometheus}"
+               },
+               "editorMode":"code",
+               "exemplar":false,
+               "expr":"avg(\n  rustic_snpashot_backup_duration_seconds{repo_name=~\"$repo_name\"}\n) by (snapshot_id)",
+               "format":"table",
+               "hide":false,
+               "instant":true,
+               "legendFormat":"__auto",
+               "range":false,
+               "refId":"duration"
+            }
+         ],
+         "title":"Snapshots of $repo_name",
+         "transformations":[
+            {
+               "id":"joinByField",
+               "options":{
+                  "byField":"snapshot_id",
+                  "mode":"inner"
+               }
+            },
+            {
+               "id":"organize",
+               "options":{
+                  "excludeByName":{
+                     "Time":true,
+                     "Time 1":true,
+                     "Time 2":true,
+                     "Time 3":true,
+                     "Time 4":true,
+                     "Time 5":true,
+                     "Time 6":true,
+                     "Value":false,
+                     "Value #info":true,
+                     "Value #paths":true,
+                     "Value #tags":true,
+                     "Value #username":true,
+                     "hostname":false,
+                     "instance":false,
+                     "snapshot_id":true
+                  },
+                  "includeByName":{
+                     
+                  },
+                  "indexByName":{
+                     "Time 1":9,
+                     "Time 2":10,
+                     "Time 3":11,
+                     "Time 4":12,
+                     "Time 5":13,
+                     "Time 6":15,
+                     "Value #duration":7,
+                     "Value #files":5,
+                     "Value #info":14,
+                     "Value #since":1,
+                     "Value #size":6,
+                     "Value #timestamp":0,
+                     "paths":3,
+                     "program_version":2,
+                     "snapshot_id":8,
+                     "username":4
+                  },
+                  "renameByName":{
+                     "Value":"Timestamp",
+                     "Value #duration":"Duration",
+                     "Value #files":"Files",
+                     "Value #info":"",
+                     "Value #since":"Since (ago)",
+                     "Value #size":"Size",
+                     "Value #timestamp":"Timestamp",
+                     "paths":"Paths",
+                     "program_version":"Client Version",
+                     "username":"Username"
+                  }
+               }
+            }
+         ],
+         "type":"table"
+      }
+   ],
+   "refresh":"",
+   "schemaVersion":39,
+   "tags":[
+      "rustic-exporter"
+   ],
+   "templating":{
+      "list":[
+         {
+            "current":{
+               "selected":false,
+               "text":"mimir-amethyst",
+               "value":"PDE3FEEA60B07F4D8"
+            },
+            "description":"Prometheus data source",
+            "hide":0,
+            "includeAll":false,
+            "label":"prometheus",
+            "multi":false,
+            "name":"prometheus",
+            "options":[
+               
+            ],
+            "query":"prometheus",
+            "queryValue":"",
+            "refresh":1,
+            "regex":"",
+            "skipUrlSync":false,
+            "type":"datasource"
+         },
+         {
+            "current":{
+               "selected":true,
+               "text":[
+                  "opendal:homelab-amethyst-vaultwarden"
+               ],
+               "value":[
+                  "opendal:homelab-amethyst-vaultwarden"
+               ]
+            },
+            "datasource":{
+               "type":"prometheus",
+               "uid":"${prometheus}"
+            },
+            "definition":"label_values(rustic_repository_info, repo_name)",
+            "hide":0,
+            "includeAll":false,
+            "label":"repository",
+            "multi":true,
+            "name":"repo_name",
+            "options":[
+               
+            ],
+            "query":{
+               "qryType":5,
+               "query":"label_values(rustic_repository_info, repo_name)",
+               "refId":"PrometheusVariableQueryEditor-VariableQuery"
+            },
+            "refresh":1,
+            "regex":"",
+            "skipUrlSync":false,
+            "sort":0,
+            "type":"query"
+         }
+      ]
+   },
+   "time":{
+      "from":"now-5m",
+      "to":"now"
+   },
+   "timepicker":{
+      "refresh_intervals":[
+         "5s",
+         "10s",
+         "30s",
+         "1m",
+         "5m"
+      ]
+   },
+   "timezone":"",
+   "title":"5. Monitor - Rustic-exporter",
+   "uid":"ee27jbiti7im8e",
+   "version":25,
+   "weekStart":""
 }

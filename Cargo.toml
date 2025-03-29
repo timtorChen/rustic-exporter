@@ -11,7 +11,7 @@ clap = { version = "4.5.20", features = ["derive"] }
 axum = "0.7.7"
 prometheus-client = "0.22.3"
 rustic_backend = "0.4.1"
-rustic_core = "0.5.3"
+rustic_core = "0.7.0"
 serde = "1.0.210"
 tokio = { version = "1.40.0", features = ["full"] }
 toml = "0.8.19"

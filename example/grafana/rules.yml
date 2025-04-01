@@ -1,0 +1,16 @@
+groups:
+- name: alert.rules
+  rules:
+
+### Rustic (Alarm when snapshot is older than 30 hours)
+
+  - alert: RusticBackupTooOld
+    expr: bottomk(1, time() - rustic_snapshot_timestamp) by (repo_id) > 30 * 3600
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Snapshot to old ({{ $labels.repo_name }})"
+      description: |-
+        Repository {{ $labels.repo_name }} (ID: {{ $labels.repo_id }}) has no current snapshot
+        Last snapshot before: {{ humanizeDuration $value }} ({{ $value }}s)

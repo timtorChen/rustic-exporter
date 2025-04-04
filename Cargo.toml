@@ -2,7 +2,7 @@
 
 [package]
 name = "rustic-exporter"
-version = "0.1.0-rc.6"
+version = "0.1.0-rc.5"
 edition = "2021"
 
 

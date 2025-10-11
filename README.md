@@ -60,7 +60,7 @@ environment variables in the configuration file using a `${VARIABLE}` syntax. Th
 ## S3 backend
 [[backup]]
   repository = "opendal:s3"
-  password = "test"
+  password_file = "/path/to/password/file"
   [backup.options]
     ## set opendal S3 backend configuration in the form of key-value
     ## https://opendal.apache.org/docs/rust/opendal/services/struct.S3.html#configuration

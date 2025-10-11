@@ -12,6 +12,7 @@ pub(crate) struct Config {
 pub(crate) struct Backup {
     pub(crate) name: String,
     pub(crate) repository: String,
-    pub(crate) password: String,
+    pub(crate) password: Option<String>,
+    pub(crate) password_file: Option<String>,
     pub(crate) options: BTreeMap<String, String>,
 }

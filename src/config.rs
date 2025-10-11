@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // Config related struct
 #[derive(Deserialize)]
@@ -13,5 +13,5 @@ pub(crate) struct Backup {
     pub(crate) name: String,
     pub(crate) repository: String,
     pub(crate) password: String,
-    pub(crate) options: HashMap<String, String>,
+    pub(crate) options: BTreeMap<String, String>,
 }

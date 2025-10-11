@@ -46,7 +46,8 @@ Options:
 
 #### Configuration file
 
-The configuration file is in TOML format, and follows the rustic [supported services](https://rustic.cli.rs/docs/commands/init/services.html).
+The configuration file is in TOML format, and follows the rustic [supported services](https://rustic.cli.rs/docs/commands/init/services.html). You can also interpolate
+environment variables in the configuration file using a `${VARIABLE}` syntax. They are interpolated and replaced into the configuration file at runtime.
 
 ```toml
 # Local
@@ -54,7 +55,6 @@ The configuration file is in TOML format, and follows the rustic [supported serv
   repository = "./local"
   password = "test"
   [backup.options]
-
 
 # Opendal
 ## S3 backend
@@ -80,6 +80,6 @@ The configuration file is in TOML format, and follows the rustic [supported serv
     ## https://opendal.apache.org/docs/rust/opendal/services/struct.Gdrive.html
     access_token = "access-token"
     refresh_token = "refresh-token"
-    client_id = "client-id"
-    client_secret = "client-secret"
+    client_id = "${GOOGLE_CLIENT_ID}"
+    client_secret = "${GOOGLE_CLIENT_SECRET}"
 ```

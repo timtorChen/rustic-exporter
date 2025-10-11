@@ -31,6 +31,7 @@ async fn metrics_handler(State(state): State<Arc<Mutex<Registry>>>) -> impl Into
 
     Response::builder()
         .status(StatusCode::OK)
+        .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
         .body(Body::from(buffer))
         .unwrap()
 }

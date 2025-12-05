@@ -86,7 +86,12 @@ impl RusticCollector {
     }
 
     async fn set_repository(self) {
-        let opts = RepositoryOptions::default().password(self.backup.password);
+        let opts = match (self.backup.password, self.backup.password_file) {
+            (Some(password), _) => RepositoryOptions::default().password(password),
+            (_, Some(password_file)) => RepositoryOptions::default().password_file(password_file),
+            _ => panic!("Either password or password_file must be set"),
+        };
+
         let backend = BackendOptions::default()
             .repository(self.backup.repository)
             .options(self.backup.options)

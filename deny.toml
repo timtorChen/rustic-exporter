@@ -73,11 +73,6 @@ ignore = [
   # FIXME!: See https://github.com/RustCrypto/RSA/issues/19#issuecomment-1822995643.
   # There is no workaround available yet.
   "RUSTSEC-2023-0071",
-  # TODO: rustic_core and rustic_backend update
-  # derivative is unmaintained
-  "RUSTSEC-2024-0388",
-  # instant is unmaintained
-  "RUSTSEC-2024-0384"  
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
@@ -97,12 +92,12 @@ allow = [
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
     "ISC",
-    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "CDLA-Permissive-2.0",
     "BSD-3-Clause",
     "MPL-2.0",
-    "OpenSSL",
     "CC0-1.0",
-    "Zlib",
+    "Zlib"
 ]
 # The confidence threshold for detecting a license from license text.
 # The higher the value, the more closely the license text must be to the

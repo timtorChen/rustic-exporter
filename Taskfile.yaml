@@ -16,7 +16,7 @@ tasks:
     cmd: cargo check
 
   cargo:deny:
-    cmd: cargo deny
+    cmd: cargo deny check all
 
   cargo:clippy:
     cmd: cargo clippy

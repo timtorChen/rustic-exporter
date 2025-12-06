@@ -1,0 +1,10 @@
+[project]
+name = "test"
+version = "0.0.1"
+requires-python = ">=3.13"
+dependencies = [
+    "testcontainers>=4.13",
+    "pytest>=9.0",
+    "pytest-xdist>=3.8",
+    "requests>=2.32",
+]

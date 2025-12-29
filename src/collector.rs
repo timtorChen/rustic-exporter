@@ -59,7 +59,7 @@ struct Metrics {
     rustic_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_backup_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_backup_end_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
-    rustic_snpashot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_snapshot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_files_total: Family<SnapshotLabels, Gauge>,
     rustic_snapshot_size_bytes: Family<SnapshotLabels, Gauge>,
 }
@@ -157,7 +157,7 @@ impl Collector for RusticCollector {
             rustic_snapshot_timestamp: Family::default(),
             rustic_snapshot_backup_end_timestamp: Family::default(),
             rustic_snapshot_backup_start_timestamp: Family::default(),
-            rustic_snpashot_backup_duration_seconds: Family::default(),
+            rustic_snapshot_backup_duration_seconds: Family::default(),
             rustic_snapshot_files_total: Family::default(),
             rustic_snapshot_size_bytes: Family::default(),
         };
@@ -234,7 +234,7 @@ impl Collector for RusticCollector {
                 .set(summary.backup_end.timestamp_micros() as f64 / (10f64.powf(6.0)));
 
             metrics
-                .rustic_snpashot_backup_duration_seconds
+                .rustic_snapshot_backup_duration_seconds
                 .get_or_create(&snapshot_labels)
                 .set(
                     (summary.backup_end - summary.backup_start)
@@ -302,13 +302,13 @@ impl Collector for RusticCollector {
                 None,
                 metrics.rustic_snapshot_backup_end_timestamp.metric_type(),
             )?)?;
-        metrics.rustic_snpashot_backup_duration_seconds.encode(
+        metrics.rustic_snapshot_backup_duration_seconds.encode(
             encoder.encode_descriptor(
-                "rustic_snpashot_backup_duration_seconds",
+                "rustic_snapshot_backup_duration_seconds",
                 "Backup duration of a snapshot.",
                 None,
                 metrics
-                    .rustic_snpashot_backup_duration_seconds
+                    .rustic_snapshot_backup_duration_seconds
                     .metric_type(),
             )?,
         )?;

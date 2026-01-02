@@ -8,3 +8,8 @@ dependencies = [
     "pytest-xdist>=3.8",
     "requests>=2.32",
 ]
+
+[tool.pytest]
+filterwarnings = ["ignore::DeprecationWarning"]
+log_cli = true
+log_cli_level = "INFO"

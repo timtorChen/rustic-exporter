@@ -70,15 +70,15 @@ def validate_prometheus_scrape(
 
         deadline = time.time() + validate_timeout
         while time.time() < deadline:
-          _pass = True
+          all_ready = True
           for m in metrics:
             res = requests.get(
               f"http://localhost:{prometheus_port}/api/v1/query?query={m}", timeout=validate_probe_timeout
             )
             if not res.ok or not len(res.json()["data"]["result"]) > 0:
-              _pass = False
+              all_ready = False
               break
-          if _pass:
+          if all_ready:
             return
           time.sleep(validate_probe_interval)
         pytest.fail("Metrics is not ready in time")
@@ -91,7 +91,7 @@ prometheus_versions = [f"v3.{minor}.0" for minor in range(2, 9)]
 
 @pytest.mark.parametrize("restic_version", restic_versions, ids=lambda v: f"restic={v}")
 @pytest.mark.parametrize("prometheus_version", prometheus_versions, ids=lambda v: f"prometheus={v}")
-def test_restic_promethus_scrape(restic_version, prometheus_version, request):
+def test_restic_prometheus_scrape(restic_version, prometheus_version, request):
   i = request.node.callspec.indices["restic_version"]
   j = request.node.callspec.indices["prometheus_version"]
   rustic_exporter_port = 1100 + i

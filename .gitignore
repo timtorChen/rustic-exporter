@@ -1,6 +1,11 @@
 # compiled output
 target/
 
+# python
+.pytest_cache
+__pycache__
+.venv
+
 # Miscellaneous
 .DS_Store
 lab/

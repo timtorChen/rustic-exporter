@@ -22,7 +22,7 @@ tasks:
   cargo:clippy:
     cmd: cargo clippy
 
-  cargo:build:release:
+  cargo:build:
     cmd: cargo build -r
 
   format:
@@ -32,11 +32,11 @@ tasks:
     cmd: uv sync
 
   test:
-    deps: [test:prepare]
+    deps: [cargo:build, test:prepare]
     cmd: uv run --frozen pytest {{.CLI_ARGS}}
 
   test:functional:
-    deps: [test:prepare]
+    deps: [cargo:build, test:prepare]
     cmd: uv run --frozen pytest tests/functional -n auto {{.CLI_ARGS}}
 
   docker:build:

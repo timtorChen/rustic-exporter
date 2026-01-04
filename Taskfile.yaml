@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 silent: true
 
@@ -20,6 +21,23 @@ tasks:
 
   cargo:clippy:
     cmd: cargo clippy
+
+  cargo:build:
+    cmd: cargo build -r
+
+  format:
+    cmd: dprint fmt
+
+  test:prepare:
+    cmd: uv sync
+
+  test:
+    deps: [cargo:build, test:prepare]
+    cmd: uv run --frozen pytest {{.CLI_ARGS}}
+
+  test:functional:
+    deps: [cargo:build, test:prepare]
+    cmd: uv run --frozen pytest tests/functional -n auto {{.CLI_ARGS}}
 
   docker:build:
     cmds:

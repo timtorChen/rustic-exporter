@@ -92,25 +92,34 @@ impl RusticCollector {
             _ => panic!("Either password or password_file must be set"),
         };
 
-        let backend = BackendOptions::default()
+        let backend_result = BackendOptions::default()
             .repository(self.backup.repository)
             .options(self.backup.options)
-            .to_backends()
-            .unwrap();
+            .to_backends();
+
+        let backend = match backend_result {
+            Ok(backend) => backend,
+            Err(_) => {
+                error!("Unable to set the backend, repository {}", self.backup.name);
+                return;
+            }
+        };
+
         let repository_result = tokio::task::spawn_blocking(move || {
-            Repository::new(&opts, &backend).unwrap().open().unwrap()
+            Repository::new(&opts, &backend).and_then(|repo| repo.open())
         })
         .await;
 
         let repository = match repository_result {
-            Ok(r) => r,
-            Err(e) => {
-                error!("Cannot open the repository: {}", self.backup.name);
-                panic!("Error: {}", e);
+            Ok(Ok(repo)) => repo,
+            Ok(Err(_)) => {
+                error!("Unable to open the repository: {}", self.backup.name);
+                return;
             }
+            Err(_) => return,
         };
 
-        let mut state = self.state.lock().unwrap();
+        let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
         state.repository = Some(repository);
         state.ready = true;
         info!("Repository is ready, repository: {}", self.backup.name);
@@ -118,26 +127,33 @@ impl RusticCollector {
 
     async fn update_data(self) {
         debug!("Updating metrics, repository: {}", self.backup.name);
-        tokio::task::spawn_blocking(move || {
-            let mut state = self.state.lock().unwrap();
+        let backup_name = self.backup.name.clone();
+
+        let result = tokio::task::spawn_blocking(move || {
+            let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
             let repository = state.repository.as_ref().unwrap();
-            let snapshots = repository
-                .update_all_snapshots(state.snapshots.clone())
-                .unwrap();
-            state.snapshots = snapshots
+            match repository.update_all_snapshots(state.snapshots.clone()) {
+                Ok(snapshots) => state.snapshots = snapshots,
+                Err(_err) => error!("Unable to update snapshot, repository: {}", backup_name),
+            };
         })
-        .await
-        .unwrap();
-        debug!(
-            "Successfully updated metrics, repository: {}",
-            self.backup.name
-        );
+        .await;
+        match result {
+            Ok(()) => debug!(
+                "Successfully updated metrics, repository: {}",
+                self.backup.name
+            ),
+            Err(_err) => error!("Failed to update metrics, repository: {}", self.backup.name),
+        }
     }
 }
 
 impl Collector for RusticCollector {
     fn encode(&self, mut encoder: DescriptorEncoder) -> Result<(), std::fmt::Error> {
-        let data = self.state.lock().unwrap();
+        let data = match self.state.lock() {
+            Ok(data) => data,
+            Err(poisoned) => poisoned.into_inner(),
+        };
 
         //-- Set metrics
         // return if repository is not ready

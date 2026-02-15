@@ -25,7 +25,7 @@ use tokio::signal;
 use tracing::{error, info};
 
 async fn metrics_handler(State(state): State<Arc<Mutex<Registry>>>) -> impl IntoResponse {
-    let registry = state.lock().unwrap();
+    let registry = state.lock().unwrap_or_else(|p| p.into_inner());
     let mut buffer = String::new();
     encode(&mut buffer, &registry).unwrap();
 

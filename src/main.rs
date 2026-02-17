@@ -17,15 +17,11 @@ use clap::Parser;
 use core::panic;
 use prometheus_client::{encoding::text::encode, registry::Registry};
 use regex::Regex;
-use std::{
-    env, fs,
-    sync::{Arc, Mutex},
-};
+use std::{env, fs, sync::Arc};
 use tokio::signal;
 use tracing::{error, info};
 
-async fn metrics_handler(State(state): State<Arc<Mutex<Registry>>>) -> impl IntoResponse {
-    let registry = state.lock().unwrap_or_else(|p| p.into_inner());
+async fn metrics_handler(State(registry): State<Arc<Registry>>) -> impl IntoResponse {
     let mut buffer = String::new();
     encode(&mut buffer, &registry).unwrap();
 
@@ -91,10 +87,10 @@ async fn main() {
             panic!("Error: {}", e);
         }
     };
-    let registry_state = Arc::new(Mutex::new(registry));
+    let shared_registry = Arc::new(registry);
     let router = Router::new()
         .route("/metrics", get(metrics_handler))
-        .with_state(registry_state);
+        .with_state(shared_registry);
 
     info!("Start server on http://{addr}");
     let server = axum::serve(listener, router);

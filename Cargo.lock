@@ -133,9 +133,12 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
 name = "arc-swap"
-version = "1.7.1"
+version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
+checksum = "f9f3647c145568cec02c42054e07bdf9a5a698e15b466fb2341bfc393cd24aa5"
+dependencies = [
+ "rustversion",
+]
 
 [[package]]
 name = "array-init"
@@ -2787,6 +2790,7 @@ dependencies = [
 name = "rustic-exporter"
 version = "0.1.0-rc.8"
 dependencies = [
+ "arc-swap",
  "axum",
  "clap",
  "prometheus-client",

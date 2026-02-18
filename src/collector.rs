@@ -1,5 +1,6 @@
 use crate::config::Backup;
 
+use arc_swap::ArcSwap;
 use prometheus_client::{
     collector::Collector,
     encoding::{DescriptorEncoder, EncodeLabelSet, EncodeMetric},
@@ -9,22 +10,15 @@ use rustic_backend::BackendOptions;
 use rustic_core::{
     repofile::SnapshotFile, NoProgressBars, OpenStatus, Repository, RepositoryOptions,
 };
-use std::sync::{atomic::AtomicU64, Arc, Mutex};
+use std::sync::{atomic::AtomicU64, Arc};
 use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
-#[derive(Debug, Default)]
-struct State {
-    ready: bool,
-    repository: Option<Repository<NoProgressBars, OpenStatus>>,
-    snapshots: Vec<SnapshotFile>,
-}
-
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct RusticCollector {
     backup: Backup,
-    interval: u64,
-    state: Arc<Mutex<State>>,
+    repository: ArcSwap<Option<Repository<NoProgressBars, OpenStatus>>>,
+    snapshots: ArcSwap<Vec<SnapshotFile>>,
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
@@ -65,36 +59,34 @@ struct Metrics {
 }
 
 impl RusticCollector {
-    pub fn new(backup: Backup, interval: u64) -> Self {
-        let collector = Self {
+    pub fn new(backup: Backup, interval: u64) -> Arc<Self> {
+        let collector = Arc::new(Self {
             backup,
-            interval,
-            state: Arc::new(Mutex::new(State::default())),
-        };
-        Self::start(collector.clone());
+            repository: ArcSwap::new(Arc::new(None)),
+            snapshots: ArcSwap::new(Arc::new(Vec::new())),
+        });
+
+        let collector_task = collector.clone();
+        tokio::spawn(async move {
+            Self::set_repository(collector_task.clone()).await;
+            loop {
+                Self::update_snpashot(collector_task.clone()).await;
+                tokio::time::sleep(Duration::from_secs(interval)).await;
+            }
+        });
         collector
     }
 
-    fn start(self) {
-        tokio::spawn(async move {
-            Self::set_repository(self.clone()).await;
-            loop {
-                Self::update_data(self.clone()).await;
-                tokio::time::sleep(Duration::from_secs(self.interval)).await;
-            }
-        });
-    }
-
-    async fn set_repository(self) {
-        let opts = match (self.backup.password, self.backup.password_file) {
+    async fn set_repository(self: Arc<Self>) {
+        let opts = match (&self.backup.password, &self.backup.password_file) {
             (Some(password), _) => RepositoryOptions::default().password(password),
             (_, Some(password_file)) => RepositoryOptions::default().password_file(password_file),
             _ => panic!("Either password or password_file must be set"),
         };
 
         let backend_result = BackendOptions::default()
-            .repository(self.backup.repository)
-            .options(self.backup.options)
+            .repository(&self.backup.repository)
+            .options(self.backup.options.clone())
             .to_backends();
 
         let backend = match backend_result {
@@ -112,33 +104,41 @@ impl RusticCollector {
 
         let repository = match repository_result {
             Ok(Ok(repo)) => repo,
-            Ok(Err(_)) => {
+            _ => {
                 error!("Unable to open the repository: {}", self.backup.name);
                 return;
             }
-            Err(_) => return,
         };
 
-        let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
-        state.repository = Some(repository);
-        state.ready = true;
+        self.repository.store(Arc::new(Some(repository)));
         info!("Repository is ready, repository: {}", self.backup.name);
     }
 
-    async fn update_data(self) {
+    async fn update_snpashot(self: Arc<Self>) {
         debug!("Updating metrics, repository: {}", self.backup.name);
-        let backup_name = self.backup.name.clone();
 
-        let result = tokio::task::spawn_blocking(move || {
-            let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
-            let repository = state.repository.as_ref().unwrap();
-            match repository.update_all_snapshots(state.snapshots.clone()) {
-                Ok(snapshots) => state.snapshots = snapshots,
-                Err(_err) => error!("Unable to update snapshot, repository: {}", backup_name),
+        let collector = self.clone();
+        let update_result = tokio::task::spawn_blocking(move || {
+            let repo_guard = collector.repository.load();
+            let repo = match repo_guard.as_ref() {
+                Some(repo) => repo,
+                None => return,
+            };
+
+            match repo.update_all_snapshots(collector.snapshots.load().to_vec()) {
+                Ok(snapshots) => collector.snapshots.swap(Arc::new(snapshots)),
+                Err(_err) => {
+                    error!(
+                        "Unable to update snapshot, repository: {}",
+                        collector.backup.name
+                    );
+                    return;
+                }
             };
         })
         .await;
-        match result {
+
+        match update_result {
             Ok(()) => debug!(
                 "Successfully updated metrics, repository: {}",
                 self.backup.name
@@ -150,22 +150,18 @@ impl RusticCollector {
 
 impl Collector for RusticCollector {
     fn encode(&self, mut encoder: DescriptorEncoder) -> Result<(), std::fmt::Error> {
-        let data = match self.state.lock() {
-            Ok(data) => data,
-            Err(poisoned) => poisoned.into_inner(),
+        let repo_guard = self.repository.load();
+        let repo = match repo_guard.as_ref() {
+            Some(repo) => repo,
+            None => {
+                warn!(
+                    "Repository is not ready yet, repository: {}",
+                    self.backup.name
+                );
+                return Ok(());
+            }
         };
 
-        //-- Set metrics
-        // return if repository is not ready
-        if !data.ready {
-            warn!(
-                "Repository is not ready yet, repository: {}",
-                self.backup.name
-            );
-            return Ok(());
-        }
-
-        let repo = data.repository.as_ref().unwrap();
         let repo_config = repo.config();
         let metrics = Metrics {
             rustic_repository_info: Family::default(),
@@ -189,7 +185,7 @@ impl Collector for RusticCollector {
             .set(1);
 
         // set snapshot metrics
-        for snapshot in &data.snapshots {
+        for snapshot in self.snapshots.load().to_vec() {
             let snapshot_info_labels = SnapshotInfoLabels {
                 repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),

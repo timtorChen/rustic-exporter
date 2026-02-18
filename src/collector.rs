@@ -125,14 +125,16 @@ impl RusticCollector {
                 None => return,
             };
 
-            match repo.update_all_snapshots(collector.snapshots.load().to_vec()) {
-                Ok(snapshots) => collector.snapshots.swap(Arc::new(snapshots)),
+            let snapshots_result = repo.update_all_snapshots(collector.snapshots.load().to_vec());
+            match snapshots_result {
+                Ok(snapshots) => {
+                    collector.snapshots.swap(Arc::new(snapshots));
+                }
                 Err(_err) => {
                     error!(
                         "Unable to update snapshot, repository: {}",
                         collector.backup.name
                     );
-                    return;
                 }
             };
         })

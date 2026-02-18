@@ -70,7 +70,7 @@ impl RusticCollector {
         tokio::spawn(async move {
             Self::set_repository(collector_task.clone()).await;
             loop {
-                Self::update_snpashot(collector_task.clone()).await;
+                Self::update_snapshot(collector_task.clone()).await;
                 tokio::time::sleep(Duration::from_secs(interval)).await;
             }
         });
@@ -114,7 +114,7 @@ impl RusticCollector {
         info!("Repository is ready, repository: {}", self.backup.name);
     }
 
-    async fn update_snpashot(self: Arc<Self>) {
+    async fn update_snapshot(self: Arc<Self>) {
         debug!("Updating metrics, repository: {}", self.backup.name);
 
         let collector = self.clone();
@@ -187,7 +187,7 @@ impl Collector for RusticCollector {
             .set(1);
 
         // set snapshot metrics
-        for snapshot in self.snapshots.load().to_vec() {
+        for snapshot in &**self.snapshots.load() {
             let snapshot_info_labels = SnapshotInfoLabels {
                 repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),

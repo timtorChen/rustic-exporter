@@ -17,6 +17,7 @@ use tracing::{debug, error, info, warn};
 #[derive(Debug)]
 pub struct RusticCollector {
     backup: Backup,
+    interval: u64,
     repository: ArcSwap<Option<Repository<NoProgressBars, OpenStatus>>>,
     snapshots: ArcSwap<Vec<SnapshotFile>>,
 }
@@ -62,6 +63,7 @@ impl RusticCollector {
     pub fn new(backup: Backup, interval: u64) -> Arc<Self> {
         let collector = Arc::new(Self {
             backup,
+            interval,
             repository: ArcSwap::new(Arc::new(None)),
             snapshots: ArcSwap::new(Arc::new(Vec::new())),
         });
@@ -71,7 +73,7 @@ impl RusticCollector {
             Self::set_repository(collector_task.clone()).await;
             loop {
                 Self::update_snapshot(collector_task.clone()).await;
-                tokio::time::sleep(Duration::from_secs(interval)).await;
+                tokio::time::sleep(Duration::from_secs(collector_task.interval)).await;
             }
         });
         collector

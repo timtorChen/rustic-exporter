@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "automerge": true,
+      "matchDatasources": [
+        "action"
+      ],
+      "matchDepNames": [
+        "actions/checkout",
+        "Swatinem/rust-cache",
+        "dtolnay/rust-toolchain",
+        "astral-sh/setup-uv",
+        "EmbarkStudios/cargo-deny-action",
+        "taiki-e/install-action",
+        "dprint/check",
+        "docker/build-push-action",
+        "docker/login-action"
+      ],
+      "matchUpdateTypes": [
+        "digest"
+      ]
+    }
+  ]
+}

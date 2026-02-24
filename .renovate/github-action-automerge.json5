@@ -4,7 +4,7 @@
     {
       "automerge": true,
       "matchDatasources": [
-        "action"
+        "github-tags"
       ],
       "matchDepNames": [
         "actions/checkout",

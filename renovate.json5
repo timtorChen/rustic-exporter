@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended",
     ":disableRateLimiting",
-    "github>timtorChen/rustic-exporter//.renovate/action-autoMerge.json5",
-    "github>timtorChen/rustic-exporter//.renovate/rust-autoMerge.json5"
+    "github>timtorChen/rustic-exporter//.renovate/github-action-automerge.json5",
+    "github>timtorChen/rustic-exporter//.renovate/rust-automerge.json5"
   ]
 }

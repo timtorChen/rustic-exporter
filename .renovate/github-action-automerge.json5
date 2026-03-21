@@ -18,6 +18,8 @@
         "docker/login-action"
       ],
       "matchUpdateTypes": [
+        "minor",
+        "patch",
         "digest"
       ]
     }

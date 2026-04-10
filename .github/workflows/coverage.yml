@@ -16,7 +16,7 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Install cargo-hack
-        uses: taiki-e/install-action@089a51b004779caac82d134bb53aa38864ee4289 # v2.75.2
+        uses: taiki-e/install-action@b8be7f5e140177087325943c4a8e169d01c59b3d # v2.75.3
         with:
           tool: cargo-tarpaulin
       - name: Generate code coverage

@@ -26,6 +26,16 @@ Originally I would like to craft a restic-exporter supporting multiple backup re
 
 The backup client should use `restic >= v0.17`, or metrics like `rustic_snapshot_size_bytes` will be dropped.
 
+### Docker Images
+
+Two image variants are available:
+
+- **Distroless** (default): `ghcr.io/timtorchen/rustic-exporter:latest`
+- **Alpine**: `ghcr.io/timtorchen/rustic-exporter:latest-alpine`
+  - Includes openssh-client for SSH-based remote repositories
+
+Both variants support `linux/amd64` and `linux/arm64` platforms.
+
 ### Usage
 
 #### Command line

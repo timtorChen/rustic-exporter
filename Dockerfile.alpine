@@ -9,11 +9,9 @@ RUN cp /app/target/${RUST_MUSL_CROSS_TARGET}/release/rustic-exporter /app/rustic
 
 FROM --platform=$TARGETPLATFORM alpine:3.23
 RUN apk add --no-cache \
-    ca-certificates \
-    openssh-client \
-    && adduser -D -u 65532 nonroot
+  ca-certificates \
+  openssh-client
 
-COPY --from=build --chown=nonroot:nonroot /app/rustic-exporter /rustic-exporter
+COPY --from=build /app/rustic-exporter /rustic-exporter
 
-USER nonroot
 ENTRYPOINT [ "/rustic-exporter" ]

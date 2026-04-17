@@ -8,7 +8,7 @@ on:
       - "v*.*.*-rc*"
 
 jobs:
-  docker:
+  docker-distroless:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
@@ -27,7 +27,7 @@ jobs:
           repository=${{ github.repository }}
           echo "lowercase_repository=${repository,,}" >> ${GITHUB_OUTPUT}
 
-      - name: Build and push
+      - name: Build and push distroless
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           push: true
@@ -35,5 +35,36 @@ jobs:
           tags: >
             ghcr.io/${{ steps.vars.outputs.lowercase_repository }}:latest,
             ghcr.io/${{ steps.vars.outputs.lowercase_repository }}:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker-alpine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set variables
+        id: vars
+        run: |
+          repository=${{ github.repository }}
+          echo "lowercase_repository=${repository,,}" >> ${GITHUB_OUTPUT}
+
+      - name: Build and push alpine
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          file: Dockerfile.alpine
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: >
+            ghcr.io/${{ steps.vars.outputs.lowercase_repository }}:latest-alpine,
+            ghcr.io/${{ steps.vars.outputs.lowercase_repository }}:${{ github.ref_name }}-alpine
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -49,3 +49,16 @@ tasks:
           docker buildx build . \
           --tag rustic-exporter:local \
           --load
+
+  docker:build:alpine:
+    cmds:
+      - |
+          docker buildx build . \
+          --file Dockerfile.alpine \
+          --platform=linux/amd64,linux/arm64 \
+          --tag rustic-exporter:local-alpine
+      - |
+          docker buildx build . \
+          --file Dockerfile.alpine \
+          --tag rustic-exporter:local-alpine \
+          --load

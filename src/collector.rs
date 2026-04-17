@@ -93,7 +93,7 @@ impl RusticCollector {
         tokio::spawn(async move {
             Self::set_repository(collector_task.clone()).await;
             loop {
-                if let Err(_) = Self::update_snapshot(collector_task.clone()).await {
+                if Self::update_snapshot(collector_task.clone()).await.is_err() {
                     Self::set_repository(collector_task.clone()).await;
                 }
                 tokio::time::sleep(Duration::from_secs(collector_task.interval)).await;

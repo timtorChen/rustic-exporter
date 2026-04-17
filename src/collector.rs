@@ -15,6 +15,27 @@ use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
 #[derive(Debug)]
+enum UpdateError {
+    RepositoryNotReady,
+    SnapshotUpdateFailed,
+    ConnectionLost { previous_count: usize },
+}
+
+impl std::fmt::Display for UpdateError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UpdateError::RepositoryNotReady => write!(f, "repository not ready"),
+            UpdateError::SnapshotUpdateFailed => write!(f, "snapshot update failed"),
+            UpdateError::ConnectionLost { previous_count } => {
+                write!(f, "connection lost (snapshots: {} → 0)", previous_count)
+            }
+        }
+    }
+}
+
+impl std::error::Error for UpdateError {}
+
+#[derive(Debug)]
 pub struct RusticCollector {
     backup: Backup,
     interval: u64,
@@ -72,7 +93,9 @@ impl RusticCollector {
         tokio::spawn(async move {
             Self::set_repository(collector_task.clone()).await;
             loop {
-                Self::update_snapshot(collector_task.clone()).await;
+                if let Err(_) = Self::update_snapshot(collector_task.clone()).await {
+                    Self::set_repository(collector_task.clone()).await;
+                }
                 tokio::time::sleep(Duration::from_secs(collector_task.interval)).await;
             }
         });
@@ -116,39 +139,71 @@ impl RusticCollector {
         info!("Repository is ready, repository: {}", self.backup.name);
     }
 
-    async fn update_snapshot(self: Arc<Self>) {
+    async fn update_snapshot(self: Arc<Self>) -> Result<(), UpdateError> {
         debug!("Updating metrics, repository: {}", self.backup.name);
 
         let collector = self.clone();
-        let update_result = tokio::task::spawn_blocking(move || {
+        let update_task = tokio::task::spawn_blocking(move || -> Result<(), UpdateError> {
             let repo_guard = collector.repository.load();
-            let repo = match repo_guard.as_ref() {
-                Some(repo) => repo,
-                None => return,
-            };
+            let repo = repo_guard
+                .as_ref()
+                .as_ref()
+                .ok_or(UpdateError::RepositoryNotReady)?;
 
-            let snapshots_result = repo.update_all_snapshots(collector.snapshots.load().to_vec());
-            match snapshots_result {
-                Ok(snapshots) => {
-                    collector.snapshots.swap(Arc::new(snapshots));
-                }
-                Err(_err) => {
-                    error!(
-                        "Unable to update snapshot, repository: {}",
-                        collector.backup.name
-                    );
-                }
-            };
-        })
-        .await;
+            let previous_snapshots = collector.snapshots.load();
+            let snapshots = repo
+                .update_all_snapshots(previous_snapshots.to_vec())
+                .map_err(|_| UpdateError::SnapshotUpdateFailed)?;
 
-        match update_result {
-            Ok(()) => debug!(
-                "Successfully updated metrics, repository: {}",
-                self.backup.name
-            ),
-            Err(_err) => error!("Failed to update metrics, repository: {}", self.backup.name),
-        }
+            // Defensive check: if we previously had snapshots but now have none,
+            // this is suspicious and likely indicates a connection failure
+            if !previous_snapshots.is_empty() && snapshots.is_empty() {
+                return Err(UpdateError::ConnectionLost {
+                    previous_count: previous_snapshots.len(),
+                });
+            }
+
+            collector.snapshots.swap(Arc::new(snapshots));
+            Ok(())
+        });
+
+        // Add timeout to prevent indefinite hangs on dead connections
+        let timeout_duration = Duration::from_secs(60);
+
+        let task_result = tokio::time::timeout(timeout_duration, update_task)
+            .await
+            .map_err(|_| {
+                error!(
+                    "Update timed out after {}s, reconnecting: {}",
+                    timeout_duration.as_secs(),
+                    self.backup.name
+                );
+                UpdateError::SnapshotUpdateFailed
+            })?;
+
+        let update_result = task_result.map_err(|_| {
+            error!("Update task panicked, repository: {}", self.backup.name);
+            UpdateError::SnapshotUpdateFailed
+        })?;
+
+        update_result.map_err(|err| {
+            // Log based on error severity
+            match &err {
+                UpdateError::ConnectionLost { .. } => {
+                    warn!("{}, reconnecting: {}", err, self.backup.name);
+                }
+                _ => {
+                    error!("{}, repository: {}", err, self.backup.name);
+                }
+            }
+            err
+        })?;
+
+        debug!(
+            "Successfully updated metrics, repository: {}",
+            self.backup.name
+        );
+        Ok(())
     }
 }
 

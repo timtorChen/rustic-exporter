@@ -2,9 +2,12 @@
 
 [package]
 name = "rustic-exporter"
-version = "0.1.0-rc.9"
+description = "Prometheus exporter for rustic/restic backup"
+repository = "https://github.com/timtorChen/rustic-exporter"
+version = "0.1.0-rc.10"
 edition = "2021"
-
+license-file = "LICENSE"
+readme = "README.md"
 
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }

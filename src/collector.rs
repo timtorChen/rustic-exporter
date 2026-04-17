@@ -19,6 +19,7 @@ enum UpdateError {
     RepositoryNotReady,
     SnapshotUpdateFailed,
     ConnectionLost { previous_count: usize },
+    Timeout,
 }
 
 impl std::fmt::Display for UpdateError {
@@ -29,6 +30,7 @@ impl std::fmt::Display for UpdateError {
             UpdateError::ConnectionLost { previous_count } => {
                 write!(f, "connection lost (snapshots: {} → 0)", previous_count)
             }
+            UpdateError::Timeout => write!(f, "update timed out"),
         }
     }
 }
@@ -172,32 +174,24 @@ impl RusticCollector {
 
         let task_result = tokio::time::timeout(timeout_duration, update_task)
             .await
-            .map_err(|_| {
-                error!(
-                    "Update timed out after {}s, reconnecting: {}",
-                    timeout_duration.as_secs(),
-                    self.backup.name
-                );
-                UpdateError::SnapshotUpdateFailed
-            })?;
+            .map_err(|_| UpdateError::Timeout)?;
 
         let update_result = task_result.map_err(|_| {
             error!("Update task panicked, repository: {}", self.backup.name);
             UpdateError::SnapshotUpdateFailed
         })?;
 
-        update_result.map_err(|err| {
-            // Log based on error severity
+        if let Some(err) = update_result.err() {
             match &err {
-                UpdateError::ConnectionLost { .. } => {
+                UpdateError::ConnectionLost { .. } | UpdateError::Timeout => {
                     warn!("{}, reconnecting: {}", err, self.backup.name);
                 }
                 _ => {
                     error!("{}, repository: {}", err, self.backup.name);
                 }
             }
-            err
-        })?;
+            return Err(err);
+        }
 
         debug!(
             "Successfully updated metrics, repository: {}",

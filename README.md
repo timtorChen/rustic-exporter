@@ -60,36 +60,64 @@ The configuration file is in TOML format, and follows the rustic [supported serv
 environment variables in the configuration file using a `${VARIABLE}` syntax. They are interpolated and replaced into the configuration file at runtime.
 
 ```toml
-# Local
+# Local backend
 [[backup]]
-  repository = "./local"
+  repository = "/local-path/to/backup"
   password = "test"
   [backup.options]
 
-# Opendal
-## S3 backend
+# OpenDAL backend for AWS S3
 [[backup]]
   repository = "opendal:s3"
   password_file = "/path/to/password/file"
   [backup.options]
-    ## set opendal S3 backend configuration in the form of key-value
+    ## set OpenDAL AWS S3 service configurations in the form of key-value
     ## https://opendal.apache.org/docs/rust/opendal/services/struct.S3.html#configuration
     endpoint = "https://s3.west-2.amazonaws.com"
-    access_key_id = "access-key-id"
-    secret_access_key = "secret-access-key"
+    access_key_id = "${ACCESS_KEY_ID}"
+    secret_access_key = "${SECRET_ACCESS_KEY}"
     bucket = "bucket-name"
     root = "/"
     region = "auto"
 
-## Google Drive backend
+# OpenDAL backend for Google Cloud Storage
+[[backup]]
+  repository = "opendal:gcs"
+  password = "test"
+  [backup.options]
+    ## https://opendal.apache.org/docs/rust/opendal/services/struct.Gcs.html#configuration
+    endpoint = "https://storage.googleapis.com"
+    credential = "base64-encoded-json"
+    bucket = "bucket-name"
+    root = "/"
+
+# OpenDAL backend for Azure Blob Storage
+[[backup]]
+  repository = "opendal:azblob"
+  password = "test"
+  [backup.options]
+    ## https://opendal.apache.org/docs/rust/opendal/services/struct.Azblob.html#configuration
+    endpoint = "https://account-name.blob.core.windows.net"
+    account_name = "account-name"
+    account_key = "account-key"
+    container = "container-name"
+    root = "/"
+
+# OpenDAL backend for Google Drive
 [[backup]]
   repository = "opendal:gdrive"
   password = "test"
   [backup.options]
-    ## set opendal GoogleDrive backend configuration
-    ## https://opendal.apache.org/docs/rust/opendal/services/struct.Gdrive.html
+    ## https://opendal.apache.org/docs/rust/opendal/services/struct.Gdrive.html#configuration
     access_token = "access-token"
-    refresh_token = "refresh-token"
-    client_id = "${GOOGLE_CLIENT_ID}"
-    client_secret = "${GOOGLE_CLIENT_SECRET}"
+    root = "/"
+
+# OpenDAL backend for SFTP
+[[backup]]
+  repository = "opendal:sftp"
+  password = "test"
+  [backup.options]
+    ## https://opendal.apache.org/docs/rust/opendal/services/struct.Sftp.html#configuration
+    endpoint = "ssh://user@hostname:port"
+    root = "/remote-path/to/backup"
 ```

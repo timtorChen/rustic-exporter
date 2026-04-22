@@ -17,8 +17,11 @@ use clap::Parser;
 use core::panic;
 use prometheus_client::{encoding::text::encode, registry::Registry};
 use regex::Regex;
-use std::io::stdout;
-use std::{env, fs, io::IsTerminal, sync::Arc};
+use std::{
+    env, fs,
+    io::{stdout, IsTerminal},
+    sync::Arc,
+};
 use tokio::signal;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;

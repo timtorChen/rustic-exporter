@@ -12,10 +12,6 @@ pub(crate) struct Args {
     #[arg(long, value_name = "LOG_LEVEL", default_value = "info")]
     pub(crate) log_level: String,
 
-    /// Show debug logs of all dependencies
-    #[arg(long, short, value_name = "VERBOSE")]
-    pub(crate) verbose: bool,
-
     /// Path to the configuration file
     #[arg(long, short, long = "config", value_name = "CONFIG")]
     pub(crate) config_path: String,

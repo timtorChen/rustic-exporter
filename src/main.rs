@@ -52,13 +52,7 @@ async fn main() {
 
     let filter = match EnvFilter::builder().try_from_env() {
         Ok(f) => f,
-        Err(_) => {
-            if args.verbose {
-                EnvFilter::new("debug")
-            } else {
-                EnvFilter::new(format!("warn,rustic_exporter={}", args.log_level))
-            }
-        }
+        Err(_) => EnvFilter::new(format!("warn,rustic_exporter={}", args.log_level)),
     };
     let is_terminal = stdout().is_terminal();
     tracing_subscriber::fmt()

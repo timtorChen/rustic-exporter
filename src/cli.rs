@@ -12,7 +12,7 @@ pub(crate) struct Args {
     #[arg(long, value_name = "LOG_LEVEL", default_value = "info")]
     pub(crate) log_level: String,
 
-    /// Show logs of all dependents
+    /// Show debug logs of all dependents
     #[arg(long, short, value_name = "VERBOSE")]
     pub(crate) verbose: bool,
 

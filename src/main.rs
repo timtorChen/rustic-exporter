@@ -17,9 +17,14 @@ use clap::Parser;
 use core::panic;
 use prometheus_client::{encoding::text::encode, registry::Registry};
 use regex::Regex;
-use std::{env, fs, sync::Arc};
+use std::{
+    env, fs,
+    io::{stdout, IsTerminal},
+    sync::Arc,
+};
 use tokio::signal;
 use tracing::{error, info};
+use tracing_subscriber::EnvFilter;
 
 async fn metrics_handler(State(registry): State<Arc<Registry>>) -> impl IntoResponse {
     let mut buffer = String::new();
@@ -45,14 +50,15 @@ fn replace_with_env_vars(input: &str) -> String {
 async fn main() {
     let args = cli::Args::parse();
 
-    // log level
-    if args.verbose {
-        tracing_subscriber::fmt().init();
-    } else {
-        let filter =
-            tracing_subscriber::EnvFilter::new(format!("rustic_exporter={}", args.log_level));
-        tracing_subscriber::fmt().with_env_filter(filter).init();
-    }
+    let filter = match EnvFilter::builder().try_from_env() {
+        Ok(f) => f,
+        Err(_) => EnvFilter::new(format!("warn,rustic_exporter={}", args.log_level)),
+    };
+    let is_terminal = stdout().is_terminal();
+    tracing_subscriber::fmt()
+        .with_ansi(is_terminal)
+        .with_env_filter(filter)
+        .init();
 
     let config_path = args.config_path;
     let mut file_content = match fs::read_to_string(config_path.clone()) {

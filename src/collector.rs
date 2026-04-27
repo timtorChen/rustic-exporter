@@ -12,7 +12,16 @@ use rustic_core::{
 };
 use std::sync::{atomic::AtomicU64, Arc};
 use std::time::Duration;
+use thiserror::Error;
 use tracing::{debug, error, info, warn};
+
+#[derive(Debug, Error)]
+pub enum CollectorError {
+    #[error("repository is not ready")]
+    RepositoryNotReady,
+    #[error("snapshot update failed")]
+    SnapshotUpdateFailed,
+}
 
 #[derive(Debug)]
 pub struct RusticCollector {
@@ -68,87 +77,86 @@ impl RusticCollector {
             snapshots: ArcSwap::new(Arc::new(Vec::new())),
         });
 
-        let collector_task = collector.clone();
-        tokio::spawn(async move {
-            Self::set_repository(collector_task.clone()).await;
-            loop {
-                Self::update_snapshot(collector_task.clone()).await;
-                tokio::time::sleep(Duration::from_secs(collector_task.interval)).await;
+        tokio::spawn({
+            let collector = collector.clone();
+            async move {
+                loop {
+                    let repo_result = Self::set_repository(collector.clone()).await;
+                    if repo_result.is_ok() {
+                        // successfully set the repository, looply update snapshots
+                        loop {
+                            let snapshots_result = Self::update_snapshots(collector.clone()).await;
+                            if matches!(snapshots_result, Err(CollectorError::RepositoryNotReady)) {
+                                // repository become not ready somehow, break the loop and start over
+                                break;
+                            }
+                            tokio::time::sleep(Duration::from_secs(collector.interval)).await;
+                        }
+                    } else {
+                        // failed to set the repository, wait and start over
+                        error!(
+                            repository = collector.backup.name,
+                            "failed to set the repostiroy"
+                        );
+                        tokio::time::sleep(Duration::from_secs(collector.interval)).await;
+                    }
+                }
             }
         });
         collector
     }
 
-    async fn set_repository(self: Arc<Self>) {
+    async fn set_repository(self: Arc<Self>) -> Result<(), CollectorError> {
+        debug!(repository = self.backup.name, "setting repository");
         let opts = match (&self.backup.password, &self.backup.password_file) {
             (Some(password), _) => RepositoryOptions::default().password(password),
             (_, Some(password_file)) => RepositoryOptions::default().password_file(password_file),
-            _ => panic!("Either password or password_file must be set"),
+            _ => panic!("either password or password_file must be set"),
         };
 
-        let backend_result = BackendOptions::default()
+        let backend = BackendOptions::default()
             .repository(&self.backup.repository)
             .options(self.backup.options.clone())
-            .to_backends();
+            .to_backends()
+            .map_err(|_| CollectorError::RepositoryNotReady)?;
 
-        let backend = match backend_result {
-            Ok(backend) => backend,
-            Err(_) => {
-                error!("Unable to set the backend, repository {}", self.backup.name);
-                return;
-            }
-        };
-
-        let repository_result = tokio::task::spawn_blocking(move || {
+        let repository = tokio::task::spawn_blocking(move || {
             Repository::new(&opts, &backend).and_then(|repo| repo.open())
         })
-        .await;
-
-        let repository = match repository_result {
-            Ok(Ok(repo)) => repo,
-            _ => {
-                error!("Unable to open the repository: {}", self.backup.name);
-                return;
-            }
-        };
+        .await
+        .map_err(|_| CollectorError::RepositoryNotReady)?
+        .map_err(|_| CollectorError::RepositoryNotReady)?;
 
         self.repository.store(Arc::new(Some(repository)));
-        info!("Repository is ready, repository: {}", self.backup.name);
+        info!(repository = self.backup.name, "repository is ready");
+        Ok(())
     }
 
-    async fn update_snapshot(self: Arc<Self>) {
-        debug!("Updating metrics, repository: {}", self.backup.name);
+    async fn update_snapshots(self: Arc<Self>) -> Result<(), CollectorError> {
+        debug!(repository = self.backup.name, "updating snapshots");
+        let collector: Arc<RusticCollector> = self.clone();
 
-        let collector = self.clone();
-        let update_result = tokio::task::spawn_blocking(move || {
-            let repo_guard = collector.repository.load();
-            let repo = match repo_guard.as_ref() {
-                Some(repo) => repo,
-                None => return,
-            };
+        let snpashots = tokio::task::spawn_blocking({
+            move || -> Result<Vec<SnapshotFile>, CollectorError> {
+                let repo_guard = collector.repository.load();
+                let repo = repo_guard
+                    .as_ref()
+                    .as_ref()
+                    .ok_or(CollectorError::RepositoryNotReady)?;
 
-            let snapshots_result = repo.update_all_snapshots(collector.snapshots.load().to_vec());
-            match snapshots_result {
-                Ok(snapshots) => {
-                    collector.snapshots.swap(Arc::new(snapshots));
-                }
-                Err(_err) => {
-                    error!(
-                        "Unable to update snapshot, repository: {}",
-                        collector.backup.name
-                    );
-                }
-            };
+                let snapshots = repo
+                    .update_all_snapshots(collector.snapshots.load().to_vec())
+                    .map_err(|_| CollectorError::SnapshotUpdateFailed)?;
+                Ok(snapshots)
+            }
         })
-        .await;
+        .await
+        .map_err(|_| CollectorError::SnapshotUpdateFailed)?
+        .map_err(|_| CollectorError::SnapshotUpdateFailed)?;
 
-        match update_result {
-            Ok(()) => debug!(
-                "Successfully updated metrics, repository: {}",
-                self.backup.name
-            ),
-            Err(_err) => error!("Failed to update metrics, repository: {}", self.backup.name),
-        }
+        self.snapshots.swap(Arc::new(snpashots));
+        info!(repository = %self.backup.name, "snapshots updated");
+        Ok(())
     }
 }
 
@@ -158,10 +166,7 @@ impl Collector for RusticCollector {
         let repo = match repo_guard.as_ref() {
             Some(repo) => repo,
             None => {
-                warn!(
-                    "Repository is not ready yet, repository: {}",
-                    self.backup.name
-                );
+                warn!(repository = self.backup.name, "repository is not ready yet",);
                 return Ok(());
             }
         };
@@ -220,9 +225,9 @@ impl Collector for RusticCollector {
             // skip current iteration if snapshot summary having no data
             if snapshot.summary.is_none() {
                 warn!(
-                    "Snapshot summary has no data, repository: {}, snapshot_id: {} ",
-                    self.backup.name,
-                    snapshot.id.to_string()
+                    repository = self.backup.name,
+                    snapshot_id = snapshot.id.to_string(),
+                    "snapshot summary has no data",
                 );
                 continue;
             }

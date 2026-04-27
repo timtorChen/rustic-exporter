@@ -22,6 +22,7 @@ regex = "1.11.1"
 arc-swap = "1.8.2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "2"
 
 [profile.release]
 panic = "unwind"

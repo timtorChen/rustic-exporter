@@ -2798,6 +2798,7 @@ dependencies = [
  "rustic_backend",
  "rustic_core",
  "serde",
+ "thiserror",
  "tokio",
  "toml",
  "tracing",

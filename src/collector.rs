@@ -96,7 +96,7 @@ impl RusticCollector {
                         // failed to set the repository, wait and start over
                         error!(
                             repository = collector.backup.name,
-                            "failed to set the repostiroy"
+                            "failed to set the repository"
                         );
                         tokio::time::sleep(Duration::from_secs(collector.interval)).await;
                     }
@@ -136,7 +136,7 @@ impl RusticCollector {
         debug!(repository = self.backup.name, "updating snapshots");
         let collector: Arc<RusticCollector> = self.clone();
 
-        let snpashots = tokio::task::spawn_blocking({
+        let snapshots = tokio::task::spawn_blocking({
             move || -> Result<Vec<SnapshotFile>, CollectorError> {
                 let repo_guard = collector.repository.load();
                 let repo = repo_guard
@@ -151,10 +151,9 @@ impl RusticCollector {
             }
         })
         .await
-        .map_err(|_| CollectorError::SnapshotUpdateFailed)?
-        .map_err(|_| CollectorError::SnapshotUpdateFailed)?;
+        .map_err(|_| CollectorError::SnapshotUpdateFailed)??;
 
-        self.snapshots.swap(Arc::new(snpashots));
+        self.snapshots.swap(Arc::new(snapshots));
         info!(repository = %self.backup.name, "snapshots updated");
         Ok(())
     }

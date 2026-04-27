@@ -144,6 +144,7 @@ impl RusticCollector {
                     .as_ref()
                     .ok_or(CollectorError::RepositoryNotReady)?;
 
+                // TODO: find a way to differentiate between snapshots cleared intentionally and repository corrpution
                 let snapshots = repo
                     .update_all_snapshots(collector.snapshots.load().to_vec())
                     .map_err(|_| CollectorError::SnapshotUpdateFailed)?;

@@ -9,3 +9,6 @@ __pycache__
 # Miscellaneous
 .DS_Store
 lab/
+.terraform/
+.terraform.tfstate*
+terraform.tfstate*

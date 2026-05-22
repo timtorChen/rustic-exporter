@@ -93,7 +93,7 @@ impl RusticCollector {
                             match snapshots_result {
                                 Ok(_) => {}
                                 Err(err) => {
-                                    error!(%err);
+                                    error!(repository = %collector.backup.name, %err);
                                     if matches!(err, CollectorError::RepositoryNotReady) {
                                         // repository become not ready somehow, break the loop and start over
                                         break;

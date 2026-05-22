@@ -19,14 +19,17 @@ use tracing::{debug, error, info, warn};
 pub enum CollectorError {
     #[error("repository is not ready")]
     RepositoryNotReady,
-    #[error("snapshot update failed")]
+    #[error("snapshots update failed")]
     SnapshotUpdateFailed,
+    #[error("snapshots became empty unexpectedly")]
+    SnapshotUnexpectedlyEmpty,
 }
 
 #[derive(Debug)]
 pub struct RusticCollector {
     backup: Backup,
     interval: u64,
+    defensive: bool,
     repository: ArcSwap<Option<Repository<NoProgressBars, OpenStatus>>>,
     snapshots: ArcSwap<Vec<SnapshotFile>>,
 }
@@ -69,10 +72,11 @@ struct Metrics {
 }
 
 impl RusticCollector {
-    pub fn new(backup: Backup, interval: u64) -> Arc<Self> {
+    pub fn new(backup: Backup, interval: u64, defensive: bool) -> Arc<Self> {
         let collector = Arc::new(Self {
             backup,
             interval,
+            defensive,
             repository: ArcSwap::new(Arc::new(None)),
             snapshots: ArcSwap::new(Arc::new(Vec::new())),
         });
@@ -86,9 +90,15 @@ impl RusticCollector {
                         // successfully set the repository, looply update snapshots
                         loop {
                             let snapshots_result = Self::update_snapshots(collector.clone()).await;
-                            if matches!(snapshots_result, Err(CollectorError::RepositoryNotReady)) {
-                                // repository become not ready somehow, break the loop and start over
-                                break;
+                            match snapshots_result {
+                                Ok(_) => {}
+                                Err(err) => {
+                                    error!(%err);
+                                    if matches!(err, CollectorError::RepositoryNotReady) {
+                                        // repository become not ready somehow, break the loop and start over
+                                        break;
+                                    }
+                                }
                             }
                             tokio::time::sleep(Duration::from_secs(collector.interval)).await;
                         }
@@ -153,6 +163,16 @@ impl RusticCollector {
         })
         .await
         .map_err(|_| CollectorError::SnapshotUpdateFailed)??;
+
+        // Defensive check: if we previously had snapshots but now have none,
+        // this is suspicious and likely indicates a connection failure, or a repository corruption.
+        // In this case, skips updating snapshots.
+        if self.defensive {
+            let previous_snapshots = self.snapshots.load();
+            if !previous_snapshots.is_empty() && snapshots.is_empty() {
+                return Err(CollectorError::SnapshotUnexpectedlyEmpty);
+            }
+        }
 
         self.snapshots.swap(Arc::new(snapshots));
         info!(repository = %self.backup.name, "snapshots updated");

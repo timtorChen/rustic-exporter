@@ -47,7 +47,7 @@ Options:
   -i, --interval <INTERVAL>    Metrics collection frequency in seconds [default: 300]
       --log-level <LOG_LEVEL>  Log level: debug, info, warn, error [default: info]
   -c, --config <CONFIG>        Path to the configuration file
-      --defensive              Enable defensive check for snapshots
+      --defensive              Enable defensive check to detect unexpected empty snapshots
       --host <HOST>            Server host [default: 0.0.0.0]
       --port <PORT>            Server port [default: 8080]
   -h, --help                   Print help

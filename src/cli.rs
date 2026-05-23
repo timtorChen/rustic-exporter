@@ -16,7 +16,7 @@ pub(crate) struct Args {
     #[arg(long, short, long = "config", value_name = "CONFIG")]
     pub(crate) config_path: String,
 
-    /// Enable defensive check for snapshots
+    /// Enable defensive check to detect unexpected empty snapshots
     #[arg(long)]
     pub(crate) defensive: bool,
 

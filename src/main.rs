@@ -79,10 +79,15 @@ async fn main() {
         }
     };
 
+    let defensive = args.defensive;
+    if defensive {
+        info!("Snapshots defensive check is enabled")
+    }
+
     let mut registry = Registry::default();
     for backup in config.backups {
         info!("Registering repositroy: {}", backup.name);
-        let collector = collector::RusticCollector::new(backup, args.interval);
+        let collector = collector::RusticCollector::new(backup, args.interval, defensive);
         registry.register_collector(Box::new(collector));
     }
     let addr = format!("{}:{}", args.host, args.port);

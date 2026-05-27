@@ -7,9 +7,7 @@ use prometheus_client::{
     metrics::{family::Family, gauge::Gauge},
 };
 use rustic_backend::BackendOptions;
-use rustic_core::{
-    repofile::SnapshotFile, NoProgressBars, OpenStatus, Repository, RepositoryOptions,
-};
+use rustic_core::{repofile::SnapshotFile, Credentials, OpenStatus, Repository, RepositoryOptions};
 use std::sync::{atomic::AtomicU64, Arc};
 use std::time::Duration;
 use thiserror::Error;
@@ -30,7 +28,7 @@ pub struct RusticCollector {
     backup: Backup,
     interval: u64,
     defensive: bool,
-    repository: ArcSwap<Option<Repository<NoProgressBars, OpenStatus>>>,
+    repository: ArcSwap<Option<Repository<OpenStatus>>>,
     snapshots: ArcSwap<Vec<SnapshotFile>>,
 }
 
@@ -119,8 +117,8 @@ impl RusticCollector {
     async fn set_repository(self: Arc<Self>) -> Result<(), CollectorError> {
         debug!(repository = self.backup.name, "setting repository");
         let opts = match (&self.backup.password, &self.backup.password_file) {
-            (Some(password), _) => RepositoryOptions::default().password(password),
-            (_, Some(password_file)) => RepositoryOptions::default().password_file(password_file),
+            (Some(password), _) => RepositoryOptions::default(),
+            (_, Some(password_file)) => RepositoryOptions::default(),
             _ => panic!("either password or password_file must be set"),
         };
 
@@ -130,12 +128,12 @@ impl RusticCollector {
             .to_backends()
             .map_err(|_| CollectorError::RepositoryNotReady)?;
 
-        let repository = tokio::task::spawn_blocking(move || {
-            Repository::new(&opts, &backend).and_then(|repo| repo.open())
-        })
-        .await
-        .map_err(|_| CollectorError::RepositoryNotReady)?
-        .map_err(|_| CollectorError::RepositoryNotReady)?;
+        let cred = Credentials::password("test");
+        let repository =
+            tokio::task::spawn_blocking(move || Repository::new(&opts, &backend)?.open(&cred))
+                .await
+                .map_err(|_| CollectorError::RepositoryNotReady)?
+                .map_err(|_| CollectorError::RepositoryNotReady)?;
 
         self.repository.store(Arc::new(Some(repository)));
         info!(repository = self.backup.name, "repository is ready");
@@ -240,7 +238,7 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(snapshot.time.timestamp_micros() as f64 / (10f64.powf(6.0)));
+                .set(snapshot.time.timestamp().as_microsecond() as f64 / (10f64.powf(6.0)));
 
             // skip current iteration if snapshot summary having no data
             if snapshot.summary.is_none() {
@@ -267,20 +265,19 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_backup_start_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_start.timestamp_micros() as f64 / (10f64.powf(6.0)));
+                .set(summary.backup_start.timestamp().as_microsecond() as f64 / (10f64.powf(6.0)));
 
             metrics
                 .rustic_snapshot_backup_end_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_end.timestamp_micros() as f64 / (10f64.powf(6.0)));
+                .set(summary.backup_end.timestamp().as_microsecond() as f64 / (10f64.powf(6.0)));
 
             metrics
                 .rustic_snapshot_backup_duration_seconds
                 .get_or_create(&snapshot_labels)
                 .set(
-                    (summary.backup_end - summary.backup_start)
-                        .num_microseconds()
-                        .unwrap() as f64
+                    (summary.backup_end.clone() - summary.backup_start.clone()).get_microseconds()
+                        as f64
                         / (10f64.powf(6.0)),
                 );
         }

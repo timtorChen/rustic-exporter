@@ -21,7 +21,7 @@ pub enum CollectorError {
     #[error("credential is not provided")]
     CredentialNotProvided,
     #[error("credential is failed to load")]
-    CredentialLoadFailed(#[source] rustic_core::RusticError),
+    CredentialLoadFailed(#[source] Box<rustic_core::RusticError>),
     #[error("repository is not ready")]
     RepositoryNotReady,
     #[error("snapshots update failed")]
@@ -141,7 +141,7 @@ impl RusticCollector {
                 return Err(CollectorError::CredentialNotProvided);
             }
             Err(e) => {
-                return Err(CollectorError::CredentialLoadFailed(*e));
+                return Err(CollectorError::CredentialLoadFailed(Box::new(*e)));
             }
         };
 

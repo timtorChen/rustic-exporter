@@ -20,7 +20,7 @@ use tracing::{debug, error, info, warn};
 pub enum CollectorError {
     #[error("credential is not provided")]
     CredentialNotProvided,
-    #[error("credential is failed to laod")]
+    #[error("credential is failed to load")]
     CredentialLoadFailed(#[source] rustic_core::RusticError),
     #[error("repository is not ready")]
     RepositoryNotReady,

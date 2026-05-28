@@ -255,7 +255,7 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(snapshot.time.timestamp().as_microsecond() as f64 / (10f64.powf(6.0)));
+                .set(snapshot.time.timestamp().as_microsecond() as f64 / 1e6);
 
             // skip current iteration if snapshot summary having no data
             if snapshot.summary.is_none() {
@@ -282,12 +282,12 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_backup_start_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_start.timestamp().as_microsecond() as f64 / (10f64.powf(6.0)));
+                .set(summary.backup_start.timestamp().as_microsecond() as f64 / 1e6);
 
             metrics
                 .rustic_snapshot_backup_end_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_end.timestamp().as_microsecond() as f64 / (10f64.powf(6.0)));
+                .set(summary.backup_end.timestamp().as_microsecond() as f64 / 1e6);
 
             metrics
                 .rustic_snapshot_backup_duration_seconds
@@ -295,7 +295,7 @@ impl Collector for RusticCollector {
                 .set(
                     (summary.backup_end.clone() - summary.backup_start.clone()).get_microseconds()
                         as f64
-                        / (10f64.powf(6.0)),
+                        / 1e6,
                 );
         }
 

@@ -124,7 +124,7 @@ impl RusticCollector {
     }
 
     async fn set_repository(self: Arc<Self>) -> Result<(), CollectorError> {
-        debug!(repository = self.backup.name, "setting repository");
+        debug!(repository = %self.backup.name, "setting repository");
 
         let repo_opts = RepositoryOptions::default();
         let backend = BackendOptions::default()
@@ -202,7 +202,7 @@ impl Collector for RusticCollector {
         let repo = match repo_guard.as_ref() {
             Some(repo) => repo,
             None => {
-                warn!(repository = self.backup.name, "repository is not ready yet",);
+                warn!(repository = %self.backup.name, "repository is not ready yet",);
                 return Ok(());
             }
         };

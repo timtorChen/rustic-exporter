@@ -14,7 +14,6 @@ use axum::{
 };
 
 use clap::{Parser, ValueEnum};
-use core::panic;
 use prometheus_client::{encoding::text::encode, registry::Registry};
 use regex::Regex;
 use std::{
@@ -79,18 +78,18 @@ async fn main() {
     let mut file_content = match fs::read_to_string(config_path.clone()) {
         Ok(c) => c,
         Err(e) => {
-            error!("unable to read the configuration file");
-            panic!("error: {}", e);
+            error!(error = %e, "unable to read the configuration file");
+            std::process::exit(1)
         }
     };
-    info!("using configuration file: {}", config_path);
+    info!("using configuration file: {config_path}");
 
     file_content = replace_with_env_vars(&file_content);
     let config: Config = match toml::from_str(&file_content) {
         Ok(c) => c,
         Err(e) => {
-            error!("invaid toml file");
-            panic!("error: {}", e);
+            error!(error = %e, "invaid toml file");
+            std::process::exit(1)
         }
     };
 
@@ -101,7 +100,7 @@ async fn main() {
 
     let mut registry = Registry::default();
     for backup in config.backups {
-        info!("registering repositroy: {}", backup.name);
+        info!(repository = %backup.name, "registering repositroy");
         let collector = collector::RusticCollector::new(backup, args.interval, defensive);
         registry.register_collector(Box::new(collector));
     }
@@ -109,8 +108,8 @@ async fn main() {
     let listener = match tokio::net::TcpListener::bind(addr.clone()).await {
         Ok(c) => c,
         Err(e) => {
-            error!("cannot listen on {}", addr);
-            panic!("error: {}", e);
+            error!(error = %e, "failed to bind listener {addr}");
+            std::process::exit(1)
         }
     };
     let shared_registry = Arc::new(registry);
@@ -129,8 +128,8 @@ async fn main() {
     match server_result {
         Ok(_) => {}
         Err(e) => {
-            error!("failed to start server");
-            panic!("error: {}", e);
+            error!(error = %e, "failed to start server");
+            std::process::exit(1)
         }
     };
 }

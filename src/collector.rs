@@ -1,6 +1,7 @@
 use crate::config::Backup;
 
 use arc_swap::ArcSwap;
+use jiff::Unit;
 use prometheus_client::{
     collector::Collector,
     encoding::{DescriptorEncoder, EncodeLabelSet, EncodeMetric},
@@ -8,8 +9,9 @@ use prometheus_client::{
 };
 use rustic_backend::BackendOptions;
 use rustic_core::{
-    repofile::SnapshotFile, NoProgressBars, OpenStatus, Repository, RepositoryOptions,
+    repofile::SnapshotFile, CredentialOptions, OpenStatus, Repository, RepositoryOptions,
 };
+use std::path::PathBuf;
 use std::sync::{atomic::AtomicU64, Arc};
 use std::time::Duration;
 use thiserror::Error;
@@ -17,6 +19,10 @@ use tracing::{debug, error, info, warn};
 
 #[derive(Debug, Error)]
 pub enum CollectorError {
+    #[error("credential is not provided")]
+    CredentialNotProvided,
+    #[error("credential is failed to load")]
+    CredentialLoadFailed(#[source] Box<rustic_core::RusticError>),
     #[error("repository is not ready")]
     RepositoryNotReady,
     #[error("snapshots update failed")]
@@ -30,7 +36,7 @@ pub struct RusticCollector {
     backup: Backup,
     interval: u64,
     defensive: bool,
-    repository: ArcSwap<Option<Repository<NoProgressBars, OpenStatus>>>,
+    repository: ArcSwap<Option<Repository<OpenStatus>>>,
     snapshots: ArcSwap<Vec<SnapshotFile>>,
 }
 
@@ -86,29 +92,30 @@ impl RusticCollector {
             async move {
                 loop {
                     let repo_result = Self::set_repository(collector.clone()).await;
-                    if repo_result.is_ok() {
-                        // successfully set the repository, looply update snapshots
-                        loop {
-                            let snapshots_result = Self::update_snapshots(collector.clone()).await;
-                            match snapshots_result {
-                                Ok(_) => {}
-                                Err(err) => {
-                                    error!(repository = %collector.backup.name, %err);
-                                    if matches!(err, CollectorError::RepositoryNotReady) {
-                                        // repository become not ready somehow, break the loop and start over
-                                        break;
+                    match repo_result {
+                        Ok(()) => {
+                            // successfully set the repository, looply update snapshots
+                            loop {
+                                let snapshots_result =
+                                    Self::update_snapshots(collector.clone()).await;
+                                match snapshots_result {
+                                    Ok(_) => {}
+                                    Err(e) => {
+                                        error!(repository = %collector.backup.name, error = %e);
+                                        if matches!(e, CollectorError::RepositoryNotReady) {
+                                            // repository become not ready somehow, break the loop and start over
+                                            break;
+                                        }
                                     }
                                 }
+                                tokio::time::sleep(Duration::from_secs(collector.interval)).await;
                             }
+                        }
+                        Err(e) => {
+                            // failed to set the repository, wait and start over
+                            error!(repository = %collector.backup.name, error = %e);
                             tokio::time::sleep(Duration::from_secs(collector.interval)).await;
                         }
-                    } else {
-                        // failed to set the repository, wait and start over
-                        error!(
-                            repository = collector.backup.name,
-                            "failed to set the repository"
-                        );
-                        tokio::time::sleep(Duration::from_secs(collector.interval)).await;
                     }
                 }
             }
@@ -118,20 +125,29 @@ impl RusticCollector {
 
     async fn set_repository(self: Arc<Self>) -> Result<(), CollectorError> {
         debug!(repository = self.backup.name, "setting repository");
-        let opts = match (&self.backup.password, &self.backup.password_file) {
-            (Some(password), _) => RepositoryOptions::default().password(password),
-            (_, Some(password_file)) => RepositoryOptions::default().password_file(password_file),
-            _ => panic!("either password or password_file must be set"),
-        };
 
+        let repo_opts = RepositoryOptions::default();
         let backend = BackendOptions::default()
             .repository(&self.backup.repository)
             .options(self.backup.options.clone())
             .to_backends()
             .map_err(|_| CollectorError::RepositoryNotReady)?;
 
+        let mut cred_opts = CredentialOptions::default();
+        cred_opts.password = self.backup.password.clone();
+        cred_opts.password_file = self.backup.password_file.clone().map(PathBuf::from);
+        let creds = match cred_opts.credentials() {
+            Ok(Some(creds)) => creds,
+            Ok(None) => {
+                return Err(CollectorError::CredentialNotProvided);
+            }
+            Err(e) => {
+                return Err(CollectorError::CredentialLoadFailed(Box::new(*e)));
+            }
+        };
+
         let repository = tokio::task::spawn_blocking(move || {
-            Repository::new(&opts, &backend).and_then(|repo| repo.open())
+            Repository::new(&repo_opts, &backend)?.open(&creds)
         })
         .await
         .map_err(|_| CollectorError::RepositoryNotReady)?
@@ -240,7 +256,7 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(snapshot.time.timestamp_micros() as f64 / (10f64.powf(6.0)));
+                .set(snapshot.time.timestamp().as_microsecond() as f64 / 1e6);
 
             // skip current iteration if snapshot summary having no data
             if snapshot.summary.is_none() {
@@ -267,21 +283,21 @@ impl Collector for RusticCollector {
             metrics
                 .rustic_snapshot_backup_start_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_start.timestamp_micros() as f64 / (10f64.powf(6.0)));
+                .set(summary.backup_start.timestamp().as_microsecond() as f64 / 1e6);
 
             metrics
                 .rustic_snapshot_backup_end_timestamp
                 .get_or_create(&snapshot_labels)
-                .set(summary.backup_end.timestamp_micros() as f64 / (10f64.powf(6.0)));
+                .set(summary.backup_end.timestamp().as_microsecond() as f64 / 1e6);
 
             metrics
                 .rustic_snapshot_backup_duration_seconds
                 .get_or_create(&snapshot_labels)
                 .set(
-                    (summary.backup_end - summary.backup_start)
-                        .num_microseconds()
-                        .unwrap() as f64
-                        / (10f64.powf(6.0)),
+                    (summary.backup_end.clone() - summary.backup_start.clone())
+                        .total(Unit::Microsecond)
+                        .unwrap_or(0.0)
+                        / 1e6,
                 );
         }
 

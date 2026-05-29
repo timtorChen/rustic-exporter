@@ -1,6 +1,7 @@
 use crate::config::Backup;
 
 use arc_swap::ArcSwap;
+use jiff::Unit;
 use prometheus_client::{
     collector::Collector,
     encoding::{DescriptorEncoder, EncodeLabelSet, EncodeMetric},
@@ -293,8 +294,9 @@ impl Collector for RusticCollector {
                 .rustic_snapshot_backup_duration_seconds
                 .get_or_create(&snapshot_labels)
                 .set(
-                    (summary.backup_end.clone() - summary.backup_start.clone()).get_microseconds()
-                        as f64
+                    (summary.backup_end.clone() - summary.backup_start.clone())
+                        .total(Unit::Microsecond)
+                        .unwrap_or(0.0)
                         / 1e6,
                 );
         }

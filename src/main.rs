@@ -79,29 +79,29 @@ async fn main() {
     let mut file_content = match fs::read_to_string(config_path.clone()) {
         Ok(c) => c,
         Err(e) => {
-            error!("Unable to read the configuration file");
-            panic!("Error: {}", e);
+            error!("unable to read the configuration file");
+            panic!("error: {}", e);
         }
     };
-    info!("Using configuration file: {}", config_path);
+    info!("using configuration file: {}", config_path);
 
     file_content = replace_with_env_vars(&file_content);
     let config: Config = match toml::from_str(&file_content) {
         Ok(c) => c,
         Err(e) => {
-            error!("Invaid toml file");
-            panic!("Error: {}", e);
+            error!("invaid toml file");
+            panic!("error: {}", e);
         }
     };
 
     let defensive = args.defensive;
     if defensive {
-        info!("Snapshots defensive check is enabled")
+        info!("snapshots defensive check is enabled")
     }
 
     let mut registry = Registry::default();
     for backup in config.backups {
-        info!("Registering repositroy: {}", backup.name);
+        info!("registering repositroy: {}", backup.name);
         let collector = collector::RusticCollector::new(backup, args.interval, defensive);
         registry.register_collector(Box::new(collector));
     }
@@ -109,8 +109,8 @@ async fn main() {
     let listener = match tokio::net::TcpListener::bind(addr.clone()).await {
         Ok(c) => c,
         Err(e) => {
-            error!("Cannot listen on {}", addr);
-            panic!("Error: {}", e);
+            error!("cannot listen on {}", addr);
+            panic!("error: {}", e);
         }
     };
     let shared_registry = Arc::new(registry);
@@ -118,7 +118,7 @@ async fn main() {
         .route("/metrics", get(metrics_handler))
         .with_state(shared_registry);
 
-    info!("Start server on http://{addr}");
+    info!("start server on http://{addr}");
     let server = axum::serve(listener, router);
     let server_result = if cfg!(debug_assertions) {
         server.await
@@ -129,8 +129,8 @@ async fn main() {
     match server_result {
         Ok(_) => {}
         Err(e) => {
-            error!("Failed to start server");
-            panic!("Error: {}", e);
+            error!("failed to start server");
+            panic!("error: {}", e);
         }
     };
 }

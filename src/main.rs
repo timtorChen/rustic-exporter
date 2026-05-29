@@ -13,7 +13,7 @@ use axum::{
     Router,
 };
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use core::panic;
 use prometheus_client::{encoding::text::encode, registry::Registry};
 use regex::Regex;
@@ -52,13 +52,28 @@ async fn main() {
 
     let filter = match EnvFilter::builder().try_from_env() {
         Ok(f) => f,
-        Err(_) => EnvFilter::new(format!("warn,rustic_exporter={}", args.log_level)),
+        Err(_) => EnvFilter::new(format!(
+            "warn,rustic_exporter={}",
+            args.log_level.to_possible_value().unwrap().get_name()
+        )),
     };
+
     let is_terminal = stdout().is_terminal();
-    tracing_subscriber::fmt()
-        .with_ansi(is_terminal)
-        .with_env_filter(filter)
-        .init();
+    match args.output {
+        cli::OutputFormat::Text => {
+            tracing_subscriber::fmt()
+                .with_ansi(is_terminal)
+                .with_env_filter(filter)
+                .init();
+        }
+        cli::OutputFormat::Json => {
+            tracing_subscriber::fmt()
+                .with_ansi(is_terminal)
+                .with_env_filter(filter)
+                .json()
+                .init();
+        }
+    }
 
     let config_path = args.config_path;
     let mut file_content = match fs::read_to_string(config_path.clone()) {

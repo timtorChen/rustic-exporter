@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 /// Rustic exporter
 #[derive(Parser)]
@@ -8,9 +8,13 @@ pub(crate) struct Args {
     #[arg(long, short, value_name = "INTERVAL", default_value = "300")]
     pub(crate) interval: u64,
 
-    /// Log level: debug, info, warn, error
+    /// Log level
     #[arg(long, value_name = "LOG_LEVEL", default_value = "info")]
-    pub(crate) log_level: String,
+    pub(crate) log_level: LogLevel,
+
+    /// output format
+    #[arg(long, short, value_name = "OUTPUT", default_value = "text")]
+    pub(crate) output: OutputFormat,
 
     /// Path to the configuration file
     #[arg(long, short, long = "config", value_name = "CONFIG")]
@@ -27,4 +31,18 @@ pub(crate) struct Args {
     /// Server port
     #[arg(long, value_name = "PORT", default_value = "8080")]
     pub(crate) port: u16,
+}
+
+#[derive(ValueEnum, Clone)]
+pub enum LogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error,
+}
+
+#[derive(ValueEnum, Clone)]
+pub enum OutputFormat {
+    Text,
+    Json,
 }

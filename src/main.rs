@@ -13,8 +13,7 @@ use axum::{
     Router,
 };
 
-use clap::Parser;
-use core::panic;
+use clap::{Parser, ValueEnum};
 use prometheus_client::{encoding::text::encode, registry::Registry};
 use regex::Regex;
 use std::{
@@ -52,41 +51,56 @@ async fn main() {
 
     let filter = match EnvFilter::builder().try_from_env() {
         Ok(f) => f,
-        Err(_) => EnvFilter::new(format!("warn,rustic_exporter={}", args.log_level)),
+        Err(_) => EnvFilter::new(format!(
+            "warn,rustic_exporter={}",
+            args.log_level.to_possible_value().unwrap().get_name()
+        )),
     };
+
     let is_terminal = stdout().is_terminal();
-    tracing_subscriber::fmt()
-        .with_ansi(is_terminal)
-        .with_env_filter(filter)
-        .init();
+    match args.output {
+        cli::OutputFormat::Text => {
+            tracing_subscriber::fmt()
+                .with_ansi(is_terminal)
+                .with_env_filter(filter)
+                .init();
+        }
+        cli::OutputFormat::Json => {
+            tracing_subscriber::fmt()
+                .with_ansi(is_terminal)
+                .with_env_filter(filter)
+                .json()
+                .init();
+        }
+    }
 
     let config_path = args.config_path;
     let mut file_content = match fs::read_to_string(config_path.clone()) {
         Ok(c) => c,
         Err(e) => {
-            error!("Unable to read the configuration file");
-            panic!("Error: {}", e);
+            error!(error = %e, "unable to read the configuration file");
+            std::process::exit(1)
         }
     };
-    info!("Using configuration file: {}", config_path);
+    info!("using configuration file: {config_path}");
 
     file_content = replace_with_env_vars(&file_content);
     let config: Config = match toml::from_str(&file_content) {
         Ok(c) => c,
         Err(e) => {
-            error!("Invaid toml file");
-            panic!("Error: {}", e);
+            error!(error = %e, "invaid toml file");
+            std::process::exit(1)
         }
     };
 
     let defensive = args.defensive;
     if defensive {
-        info!("Snapshots defensive check is enabled")
+        info!("snapshots defensive check is enabled")
     }
 
     let mut registry = Registry::default();
     for backup in config.backups {
-        info!("Registering repositroy: {}", backup.name);
+        info!(repository = %backup.name, "registering repositroy");
         let collector = collector::RusticCollector::new(backup, args.interval, defensive);
         registry.register_collector(Box::new(collector));
     }
@@ -94,8 +108,8 @@ async fn main() {
     let listener = match tokio::net::TcpListener::bind(addr.clone()).await {
         Ok(c) => c,
         Err(e) => {
-            error!("Cannot listen on {}", addr);
-            panic!("Error: {}", e);
+            error!(error = %e, "failed to bind listener {addr}");
+            std::process::exit(1)
         }
     };
     let shared_registry = Arc::new(registry);
@@ -103,7 +117,7 @@ async fn main() {
         .route("/metrics", get(metrics_handler))
         .with_state(shared_registry);
 
-    info!("Start server on http://{addr}");
+    info!("start server on http://{addr}");
     let server = axum::serve(listener, router);
     let server_result = if cfg!(debug_assertions) {
         server.await
@@ -114,8 +128,8 @@ async fn main() {
     match server_result {
         Ok(_) => {}
         Err(e) => {
-            error!("Failed to start server");
-            panic!("Error: {}", e);
+            error!(error = %e, "failed to start server");
+            std::process::exit(1)
         }
     };
 }

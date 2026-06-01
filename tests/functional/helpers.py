@@ -10,7 +10,7 @@ def wait_for_condition(fn, timeout=5, interval=0.1):
   while (time.time() - start) < timeout:
     try:
       last = fn()
-      if last:
+      if last is not None:
         return last
     except Exception:
       pass

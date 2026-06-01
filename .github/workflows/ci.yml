@@ -70,4 +70,5 @@ jobs:
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
       - name: Run Pytest
         run: |
-          uv run --frozen pytest --tempdir=${{ runner.temp }} tests/functional -n auto
+          uv run --frozen pytest --tempdir=${{ runner.temp }} tests/functional -m "parallel" -n auto
+          uv run --frozen pytest test/functional -m "not parallel"

@@ -89,6 +89,7 @@ rustic_versions = ["v0.9.5", "v0.10.0", "v0.10.1"]
 prometheus_versions = [f"v3.{minor}.0" for minor in range(2, 9)]
 
 
+@pytest.mark.parallel
 @pytest.mark.parametrize("restic_version", restic_versions, ids=lambda v: f"restic={v}")
 @pytest.mark.parametrize("prometheus_version", prometheus_versions, ids=lambda v: f"prometheus={v}")
 def test_restic_prometheus_scrape(restic_version, prometheus_version, request):
@@ -106,6 +107,7 @@ def test_restic_prometheus_scrape(restic_version, prometheus_version, request):
   )
 
 
+@pytest.mark.parallel
 @pytest.mark.parametrize("rustic_version", rustic_versions, ids=lambda v: f"rustic={v}")
 @pytest.mark.parametrize("prometheus_version", prometheus_versions, ids=lambda v: f"prometheus={v}")
 def test_rustic_prometheus_scrape(rustic_version, prometheus_version, request):

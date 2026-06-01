@@ -1,39 +1,30 @@
 from exporter import start_rustic_exporter
-
 import pytest
-
 import helpers
 import textwrap
-
 import logging
-import requests
-import time
+
+REPO_NAME = "test"
+REPO_DIR = "./tests/data/golden-repo"
+REPO_PASSWORD = "test"
+port = helpers.get_free_port()
+url = f"http://localhost:{port}/metrics"
 
 
 @pytest.fixture(scope="module")
-def metrics():
-  repo_name = "test"
-  repo_dir = "./tests/data/golden-repo"
-  repo_password = "test"
-  rustic_exporter_url = "http://localhost:8080/metrics"
-
-  exporter_config_content = textwrap.dedent(f"""\
+def server():
+  config_content = textwrap.dedent(f"""\
     [[backup]]
-    name = "{repo_name}"
-    repository = "{repo_dir}"
-    password = "{repo_password}"
+    name = "{REPO_NAME}"
+    repository = "{REPO_DIR}"
+    password = "{REPO_PASSWORD}"
     [backup.options]
     """)
-  exporter = start_rustic_exporter(config_content=exporter_config_content)
-  with exporter:
-    logging.info("Start rustic-exporter")
-    helpers.wait_for_http_ready(url=rustic_exporter_url)
 
-    # TODO wait for metrics all ready
-    time.sleep(5)
-    res = requests.get(rustic_exporter_url)
-    metrics = helpers.get_metrics_from_text(res.text)
-    return metrics
+  server = start_rustic_exporter(config_content, port)
+  with server:
+    logging.info("Start rustic-exporter")
+    yield server
 
 
 @pytest.mark.parametrize(
@@ -42,8 +33,8 @@ def metrics():
     ("rustic_repository_info", "3b0165bb", 1),
   ],
 )
-def test_repository_metrics(metrics, metric_name, repo_id, value):
-  assert helpers.get_metrics_value(metrics, metric_name, filter_labels={"repo_id": repo_id}) == value
+def test_repository_metrics(server, metric_name, repo_id, value):
+  helpers.wait_metrics_value(url, metric_name, filter_labels={"repo_id": repo_id}) == value
 
 
 @pytest.mark.parametrize(
@@ -63,5 +54,5 @@ def test_repository_metrics(metrics, metric_name, repo_id, value):
     ("rustic_snapshot_backup_duration_seconds", "f797d9b5", 0.041405),
   ],
 )
-def test_snapshot_metrics(metrics, metric_name, snapshot_id, value):
-  assert helpers.get_metrics_value(metrics, metric_name, filter_labels={"snapshot_id": snapshot_id}) == value
+def test_snapshot_metrics(server, metric_name, snapshot_id, value):
+  assert helpers.wait_metrics_value(url, metric_name, filter_labels={"snapshot_id": snapshot_id}) == value

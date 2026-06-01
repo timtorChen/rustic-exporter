@@ -14,3 +14,6 @@ dependencies = [
 filterwarnings = ["ignore::DeprecationWarning"]
 log_cli = true
 log_cli_level = "INFO"
+markers = [
+    "parallel: test can be run in parallel"
+]

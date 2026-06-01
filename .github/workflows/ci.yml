@@ -71,4 +71,4 @@ jobs:
       - name: Run Pytest
         run: |
           uv run --frozen pytest --tempdir=${{ runner.temp }} tests/functional -m "parallel" -n auto
-          uv run --frozen pytest test/functional -m "not parallel"
+          uv run --frozen pytest tests/functional -m "not parallel"

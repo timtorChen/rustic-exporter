@@ -45,7 +45,8 @@ Usage: rustic-exporter [OPTIONS] --config <CONFIG>
 
 Options:
   -i, --interval <INTERVAL>    Metrics collection frequency in seconds [default: 300]
-      --log-level <LOG_LEVEL>  Log level: debug, info, warn, error [default: info]
+      --log-level <LOG_LEVEL>  Log level [default: info] [possible values: debug, info, warn, error]
+  -o, --output <OUTPUT>        output format [default: text] [possible values: text, json]
   -c, --config <CONFIG>        Path to the configuration file
       --defensive              Enable defensive check to detect unexpected empty snapshots
       --host <HOST>            Server host [default: 0.0.0.0]

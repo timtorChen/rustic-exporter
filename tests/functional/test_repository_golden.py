@@ -34,7 +34,7 @@ def server():
   ],
 )
 def test_repository_metrics(server, metric_name, repo_id, value):
-  helpers.wait_metrics_value(url, metric_name, filter_labels={"repo_id": repo_id}) == value
+  assert helpers.wait_metrics_value(url, metric_name, filter_labels={"repo_id": repo_id}) == value
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,97 @@
+[
+  {
+    "group_key": {
+      "hostname": "air",
+      "label": "",
+      "paths": [
+        "data"
+      ]
+    },
+    "snapshots": [
+      {
+        "time": "2026-05-31T15:31:29.337172+08:00",
+        "program_version": "rustic 0.11.0",
+        "tree": "ab1a1738986efcfffb40a288cb6b6df23560a9970c3f35021cea216b41c8f070",
+        "paths": [
+          "data"
+        ],
+        "hostname": "air",
+        "username": "",
+        "uid": 0,
+        "gid": 0,
+        "tags": [],
+        "original": "9e3db981091f2b8b87988d286ef0b57f090c304463b7b17acd3a1065421b885d",
+        "summary": {
+          "files_new": 1,
+          "files_changed": 0,
+          "files_unmodified": 0,
+          "total_files_processed": 1,
+          "total_bytes_processed": 1024,
+          "dirs_new": 2,
+          "dirs_changed": 0,
+          "dirs_unmodified": 0,
+          "total_dirs_processed": 2,
+          "total_dirsize_processed": 507,
+          "data_blobs": 1,
+          "tree_blobs": 2,
+          "data_added": 1531,
+          "data_added_packed": 1489,
+          "data_added_files": 1024,
+          "data_added_files_packed": 1065,
+          "data_added_trees": 507,
+          "data_added_trees_packed": 424,
+          "command": "rustic backup data -r ./tests/data/local-repo --init",
+          "backup_start": "2026-05-31T15:31:29.345597+08:00",
+          "backup_end": "2026-05-31T15:31:29.397221+08:00",
+          "backup_duration": 0.051624,
+          "total_duration": 0.060049
+        },
+        "id": "9e3db981091f2b8b87988d286ef0b57f090c304463b7b17acd3a1065421b885d"
+      },
+      {
+        "time": "2026-05-31T16:00:34.184508+08:00",
+        "program_version": "rustic 0.11.0",
+        "parent": "9e3db981091f2b8b87988d286ef0b57f090c304463b7b17acd3a1065421b885d",
+        "parents": [
+          "9e3db981091f2b8b87988d286ef0b57f090c304463b7b17acd3a1065421b885d"
+        ],
+        "tree": "d2ce66988688603815da39417faa69e3bfc035ec275608f9e221eed01b737454",
+        "paths": [
+          "data"
+        ],
+        "hostname": "air",
+        "username": "",
+        "uid": 0,
+        "gid": 0,
+        "tags": [],
+        "original": "f797d9b55a74a79f78e4bb82cc1ca72e22c9fa070ce8300dc75ad6166607bd45",
+        "summary": {
+          "files_new": 1,
+          "files_changed": 1,
+          "files_unmodified": 0,
+          "total_files_processed": 2,
+          "total_bytes_processed": 3072,
+          "dirs_new": 0,
+          "dirs_changed": 2,
+          "dirs_unmodified": 0,
+          "total_dirs_processed": 2,
+          "total_dirsize_processed": 858,
+          "data_blobs": 1,
+          "tree_blobs": 2,
+          "data_added": 2906,
+          "data_added_packed": 2592,
+          "data_added_files": 2048,
+          "data_added_files_packed": 2089,
+          "data_added_trees": 858,
+          "data_added_trees_packed": 503,
+          "command": "rustic backup data -r ./tests/data/golden-repo",
+          "backup_start": "2026-05-31T16:00:34.190304+08:00",
+          "backup_end": "2026-05-31T16:00:34.231709+08:00",
+          "backup_duration": 0.041405,
+          "total_duration": 0.047201
+        },
+        "id": "f797d9b55a74a79f78e4bb82cc1ca72e22c9fa070ce8300dc75ad6166607bd45"
+      }
+    ]
+  }
+]

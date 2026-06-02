@@ -7,9 +7,13 @@ dependencies = [
     "pytest>=9.0",
     "pytest-xdist>=3.8",
     "requests>=2.32",
+    "prometheus-client>=0.25.0",
 ]
 
 [tool.pytest]
 filterwarnings = ["ignore::DeprecationWarning"]
 log_cli = true
 log_cli_level = "INFO"
+markers = [
+    "parallel: test can be run in parallel"
+]

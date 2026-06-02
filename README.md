@@ -122,3 +122,40 @@ environment variables in the configuration file using a `${VARIABLE}` syntax. Th
     endpoint = "ssh://user@hostname:port"
     root = "/remote-path/to/backup"
 ```
+
+### Metrics output
+
+```
+# HELP rustic_repository_info Repository information.
+# TYPE rustic_repository_info gauge
+rustic_repository_info{repo_name="test",repo_id="3b0165bb",version="2"} 1
+# HELP rustic_snapshot_info Snapshot inforamation.
+# TYPE rustic_snapshot_info gauge
+rustic_snapshot_info{repo_name="test",repo_id="3b0165bb",snapshot_id="f797d9b5",paths="data",hostname="air",username="",tags="",program_version="rustic 0.11.0"} 1
+rustic_snapshot_info{repo_name="test",repo_id="3b0165bb",snapshot_id="9e3db981",paths="data",hostname="air",username="",tags="",program_version="rustic 0.11.0"} 1
+# HELP rustic_snapshot_files_total Total files in a snapshot.
+# TYPE rustic_snapshot_files_total gauge
+rustic_snapshot_files_total{repo_name="test",repo_id="3b0165bb",snapshot_id="9e3db981"} 1
+rustic_snapshot_files_total{repo_name="test",repo_id="3b0165bb",snapshot_id="f797d9b5"} 2
+# HELP rustic_snapshot_timestamp Snapshot creation time in unix timestamp.
+# TYPE rustic_snapshot_timestamp gauge
+rustic_snapshot_timestamp{repo_name="test",repo_id="3b0165bb",snapshot_id="9e3db981"} 1780212689.337172
+rustic_snapshot_timestamp{repo_name="test",repo_id="3b0165bb",snapshot_id="f797d9b5"} 1780214434.184508
+# HELP rustic_snapshot_size_bytes Snapshot size in bytes.
+# TYPE rustic_snapshot_size_bytes gauge
+rustic_snapshot_size_bytes{repo_name="test",repo_id="3b0165bb",snapshot_id="f797d9b5"} 3072
+rustic_snapshot_size_bytes{repo_name="test",repo_id="3b0165bb",snapshot_id="9e3db981"} 1024
+# HELP rustic_snapshot_backup_start_timestamp Backup start time of a snapshot in unix timestamp.
+# TYPE rustic_snapshot_backup_start_timestamp gauge
+rustic_snapshot_backup_start_timestamp{repo_name="test",repo_id="3b0165bb",snapshot_id="f797d9b5"} 1780214434.190304
+rustic_snapshot_backup_start_timestamp{repo_name="test",repo_id="3b0165bb",snapshot_id="9e3db981"} 1780212689.345597
+# HELP rustic_snapshot_backup_end_timestamp Backup finished time of a snapshot in unix timestamp.
+# TYPE rustic_snapshot_backup_end_timestamp gauge
+rustic_snapshot_backup_end_timestamp{repo_name="test",repo_id="3b0165bb",snapshot_id="f797d9b5"} 1780214434.231709
+rustic_snapshot_backup_end_timestamp{repo_name="test",repo_id="3b0165bb",snapshot_id="9e3db981"} 1780212689.397221
+# HELP rustic_snapshot_backup_duration_seconds Backup duration of a snapshot.
+# TYPE rustic_snapshot_backup_duration_seconds gauge
+rustic_snapshot_backup_duration_seconds{repo_name="test",repo_id="3b0165bb",snapshot_id="f797d9b5"} 0.041405
+rustic_snapshot_backup_duration_seconds{repo_name="test",repo_id="3b0165bb",snapshot_id="9e3db981"} 0.051624
+# EOF
+```

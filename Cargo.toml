@@ -12,7 +12,7 @@ readme = "README.md"
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }
 axum = "0.8.0"
-prometheus-client = "0.24.0"
+prometheus-client = "0.25.0"
 rustic_core = "=0.11.0"
 rustic_backend = "=0.6.1"
 jiff = "0.2.28"

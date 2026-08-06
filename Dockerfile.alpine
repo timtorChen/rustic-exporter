@@ -7,7 +7,7 @@ COPY . .
 RUN cargo build -r --target $RUST_MUSL_CROSS_TARGET
 RUN cp /app/target/${RUST_MUSL_CROSS_TARGET}/release/rustic-exporter /app/rustic-exporter
 
-FROM --platform=$TARGETPLATFORM alpine:3.23
+FROM --platform=$TARGETPLATFORM alpine:3.24
 RUN apk add --no-cache \
   ca-certificates \
   openssh-client

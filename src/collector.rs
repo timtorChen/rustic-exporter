@@ -68,6 +68,7 @@ struct SnapshotLabels {
 
 struct Metrics {
     rustic_repository_info: Family<RepositoryInfoLabels, Gauge>,
+    rustic_repository_snapshot_count: Family<RepositoryInfoLabels, Gauge>,
     rustic_snapshot_info: Family<SnapshotInfoLabels, Gauge>,
     rustic_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_backup_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
@@ -75,6 +76,10 @@ struct Metrics {
     rustic_snapshot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_files_total: Family<SnapshotLabels, Gauge>,
     rustic_snapshot_size_bytes: Family<SnapshotLabels, Gauge>,
+    rustic_latest_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_latest_snapshot_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_latest_snapshot_end_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rusitc_latest_snapshot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
 }
 
 impl RusticCollector {
@@ -210,6 +215,7 @@ impl Collector for RusticCollector {
         let repo_config = repo.config();
         let metrics = Metrics {
             rustic_repository_info: Family::default(),
+            rustic_repository_snapshot_count: Family::default(),
             rustic_snapshot_info: Family::default(),
             rustic_snapshot_timestamp: Family::default(),
             rustic_snapshot_backup_end_timestamp: Family::default(),
@@ -217,6 +223,10 @@ impl Collector for RusticCollector {
             rustic_snapshot_backup_duration_seconds: Family::default(),
             rustic_snapshot_files_total: Family::default(),
             rustic_snapshot_size_bytes: Family::default(),
+            rusitc_latest_snapshot_backup_duration_seconds: Family::default(),
+            rustic_latest_snapshot_end_timestamp: Family::default(),
+            rustic_latest_snapshot_start_timestamp: Family::default(),
+            rustic_latest_snapshot_timestamp: Family::default(),
         };
 
         // set repository metrics
@@ -310,6 +320,7 @@ impl Collector for RusticCollector {
                 None,
                 metrics.rustic_repository_info.metric_type(),
             )?)?;
+
         metrics
             .rustic_snapshot_info
             .encode(encoder.encode_descriptor(

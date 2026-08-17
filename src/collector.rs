@@ -223,10 +223,10 @@ impl Collector for RusticCollector {
             rustic_snapshot_backup_duration_seconds: Family::default(),
             rustic_snapshot_files_total: Family::default(),
             rustic_snapshot_size_bytes: Family::default(),
-            rusitc_latest_snapshot_backup_duration_seconds: Family::default(),
+            rustic_latest_snapshot_timestamp: Family::default(),
             rustic_latest_snapshot_end_timestamp: Family::default(),
             rustic_latest_snapshot_start_timestamp: Family::default(),
-            rustic_latest_snapshot_timestamp: Family::default(),
+            rusitc_latest_snapshot_backup_duration_seconds: Family::default(),
         };
 
         // set repository metrics

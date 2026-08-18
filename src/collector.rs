@@ -48,6 +48,12 @@ struct RepositoryInfoLabels {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
+struct RepositoryLabels {
+    repo_name: String,
+    repo_id: String,
+}
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
 struct SnapshotInfoLabels {
     repo_name: String,
     repo_id: String,
@@ -68,7 +74,7 @@ struct SnapshotLabels {
 
 struct Metrics {
     rustic_repository_info: Family<RepositoryInfoLabels, Gauge>,
-    rustic_repository_snapshot_count: Family<RepositoryInfoLabels, Gauge>,
+    rustic_repository_snapshot_count: Family<RepositoryLabels, Gauge>,
     rustic_snapshot_info: Family<SnapshotInfoLabels, Gauge>,
     rustic_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_backup_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
@@ -76,10 +82,13 @@ struct Metrics {
     rustic_snapshot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_files_total: Family<SnapshotLabels, Gauge>,
     rustic_snapshot_size_bytes: Family<SnapshotLabels, Gauge>,
+    rustic_latest_snapshot_info: Family<SnapshotInfoLabels, Gauge>,
     rustic_latest_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
-    rustic_latest_snapshot_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
-    rustic_latest_snapshot_end_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
-    rusitc_latest_snapshot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_latest_snapshot_backup_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_latest_snapshot_backup_end_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_latest_snapshot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_latest_snapshot_files_total: Family<SnapshotLabels, Gauge>,
+    rustic_latest_snapshot_size_bytes: Family<SnapshotLabels, Gauge>,
 }
 
 impl RusticCollector {
@@ -223,10 +232,13 @@ impl Collector for RusticCollector {
             rustic_snapshot_backup_duration_seconds: Family::default(),
             rustic_snapshot_files_total: Family::default(),
             rustic_snapshot_size_bytes: Family::default(),
+            rustic_latest_snapshot_info: Family::default(),
             rustic_latest_snapshot_timestamp: Family::default(),
-            rustic_latest_snapshot_end_timestamp: Family::default(),
-            rustic_latest_snapshot_start_timestamp: Family::default(),
-            rusitc_latest_snapshot_backup_duration_seconds: Family::default(),
+            rustic_latest_snapshot_backup_start_timestamp: Family::default(),
+            rustic_latest_snapshot_backup_end_timestamp: Family::default(),
+            rustic_latest_snapshot_backup_duration_seconds: Family::default(),
+            rustic_latest_snapshot_files_total: Family::default(),
+            rustic_latest_snapshot_size_bytes: Family::default(),
         };
 
         // set repository metrics
@@ -238,6 +250,14 @@ impl Collector for RusticCollector {
                 version: repo_config.version.to_string(),
             })
             .set(1);
+
+        metrics
+            .rustic_repository_snapshot_count
+            .get_or_create(&RepositoryLabels {
+                repo_name: self.backup.name.clone(),
+                repo_id: repo_config.id.to_string(),
+            })
+            .set(self.snapshots.load().len() as i64);
 
         // set snapshot metrics
         for snapshot in &**self.snapshots.load() {

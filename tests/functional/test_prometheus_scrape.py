@@ -67,7 +67,6 @@ def validate_prometheus_scrape(
           "rustic_snapshot_backup_start_timestamp",
           "rustic_snapshot_backup_end_timestamp",
           "rustic_snapshot_backup_duration_seconds",
-          "rustic_latest_snapshot_info",
           "rustic_latest_snapshot_files_total",
           "rustic_latest_snapshot_timestamp",
           "rustic_latest_snapshot_size_bytes",

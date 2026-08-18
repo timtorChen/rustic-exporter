@@ -82,7 +82,6 @@ struct Metrics {
     rustic_snapshot_backup_duration_seconds: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_files_total: Family<SnapshotLabels, Gauge>,
     rustic_snapshot_size_bytes: Family<SnapshotLabels, Gauge>,
-    rustic_latest_snapshot_info: Family<SnapshotInfoLabels, Gauge>,
     rustic_latest_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_latest_snapshot_backup_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_latest_snapshot_backup_end_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
@@ -232,7 +231,6 @@ impl Collector for RusticCollector {
             rustic_snapshot_backup_duration_seconds: Family::default(),
             rustic_snapshot_files_total: Family::default(),
             rustic_snapshot_size_bytes: Family::default(),
-            rustic_latest_snapshot_info: Family::default(),
             rustic_latest_snapshot_timestamp: Family::default(),
             rustic_latest_snapshot_backup_start_timestamp: Family::default(),
             rustic_latest_snapshot_backup_end_timestamp: Family::default(),
@@ -295,11 +293,6 @@ impl Collector for RusticCollector {
                 .set(snapshot.time.timestamp().as_microsecond() as f64 / 1e6);
 
             if latest_snapshot_id.as_ref() == Some(&snapshot.id) {
-                metrics
-                    .rustic_latest_snapshot_info
-                    .get_or_create(&snapshot_info_labels)
-                    .set(1);
-
                 metrics
                     .rustic_latest_snapshot_timestamp
                     .get_or_create(&snapshot_labels)
@@ -456,14 +449,6 @@ impl Collector for RusticCollector {
                     .metric_type(),
             )?,
         )?;
-        metrics
-            .rustic_latest_snapshot_info
-            .encode(encoder.encode_descriptor(
-                "rustic_latest_snapshot_info",
-                "Latest snapshot inforamation.",
-                None,
-                metrics.rustic_latest_snapshot_info.metric_type(),
-            )?)?;
         metrics
             .rustic_latest_snapshot_files_total
             .encode(encoder.encode_descriptor(

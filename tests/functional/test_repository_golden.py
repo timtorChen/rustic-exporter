@@ -29,9 +29,7 @@ def server():
 
 @pytest.mark.parametrize(
   ("metric_name", "repo_id", "value"),
-  [
-    ("rustic_repository_info", "3b0165bb", 1),
-  ],
+  [("rustic_repository_info", "3b0165bb", 1), ("rustic_repository_snapshot_count", "3b0165bb", 2)],
 )
 def test_repository_metrics(server, metric_name, repo_id, value):
   assert helpers.wait_metrics_value(url, metric_name, filter_labels={"repo_id": repo_id}) == value
@@ -52,6 +50,12 @@ def test_repository_metrics(server, metric_name, repo_id, value):
     ("rustic_snapshot_backup_start_timestamp", "f797d9b5", 1780214434.190304),
     ("rustic_snapshot_backup_end_timestamp", "f797d9b5", 1780214434.231709),
     ("rustic_snapshot_backup_duration_seconds", "f797d9b5", 0.041405),
+    ("rustic_latest_snapshot_files_total", "f797d9b5", 2),
+    ("rustic_latest_snapshot_size_bytes", "f797d9b5", 3072),
+    ("rustic_latest_snapshot_timestamp", "f797d9b5", 1780214434.184508),
+    ("rustic_latest_snapshot_backup_start_timestamp", "f797d9b5", 1780214434.190304),
+    ("rustic_latest_snapshot_backup_end_timestamp", "f797d9b5", 1780214434.231709),
+    ("rustic_latest_snapshot_backup_duration_seconds", "f797d9b5", 0.041405),
   ],
 )
 def test_snapshot_metrics(server, metric_name, snapshot_id, value):

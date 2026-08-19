@@ -60,6 +60,13 @@ def validate_prometheus_scrape(
         metrics = [
           "rustic_repository_info",
           "rustic_repository_snapshot_count",
+          "rustic_repository_latest_snapshot_info",
+          "rustic_repository_latest_snapshot_files_total",
+          "rustic_repository_latest_snapshot_timestamp",
+          "rustic_repository_latest_snapshot_size_bytes",
+          "rustic_repository_latest_snapshot_backup_start_timestamp",
+          "rustic_repository_latest_snapshot_backup_end_timestamp",
+          "rustic_repository_latest_snapshot_backup_duration_seconds",
           "rustic_snapshot_info",
           "rustic_snapshot_files_total",
           "rustic_snapshot_timestamp",
@@ -67,12 +74,6 @@ def validate_prometheus_scrape(
           "rustic_snapshot_backup_start_timestamp",
           "rustic_snapshot_backup_end_timestamp",
           "rustic_snapshot_backup_duration_seconds",
-          "rustic_latest_snapshot_files_total",
-          "rustic_latest_snapshot_timestamp",
-          "rustic_latest_snapshot_size_bytes",
-          "rustic_latest_snapshot_backup_start_timestamp",
-          "rustic_latest_snapshot_backup_end_timestamp",
-          "rustic_latest_snapshot_backup_duration_seconds",
         ]
 
         deadline = time.time() + validate_timeout

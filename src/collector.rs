@@ -244,6 +244,8 @@ impl Collector for RusticCollector {
             rustic_snapshot_size_bytes: Family::default(),
         };
 
+        let snapshots = self.snapshots.load();
+
         // set repository metrics
         metrics
             .rustic_repository_info
@@ -260,17 +262,15 @@ impl Collector for RusticCollector {
                 repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),
             })
-            .set(self.snapshots.load().len() as i64);
+            .set(snapshots.len() as i64);
 
         // set snapshot metrics
-        let latest_snapshot_id = self
-            .snapshots
-            .load()
+        let latest_snapshot_id = snapshots
             .iter()
             .max_by_key(|s| s.time.timestamp())
             .map(|s| s.id);
 
-        for snapshot in &**self.snapshots.load() {
+        for snapshot in &**snapshots {
             let snapshot_info_labels = SnapshotInfoLabels {
                 repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),
@@ -459,16 +459,14 @@ impl Collector for RusticCollector {
                     .metric_type(),
             )?,
         )?;
-        metrics.rustic_repository_latest_snapshot_info.encode(
-            encoder.encode_descriptor(
+        metrics
+            .rustic_repository_latest_snapshot_info
+            .encode(encoder.encode_descriptor(
                 "rustic_repository_latest_snapshot_info",
                 "Latest snapshot inforamation.",
                 None,
-                metrics
-                    .rustic_repository_latest_snapshot_files_total
-                    .metric_type(),
-            )?,
-        )?;
+                metrics.rustic_repository_latest_snapshot_info.metric_type(),
+            )?)?;
         metrics
             .rustic_repository_latest_snapshot_files_total
             .encode(

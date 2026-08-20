@@ -48,6 +48,12 @@ struct RepositoryInfoLabels {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
+struct RepositoryLabels {
+    repo_name: String,
+    repo_id: String,
+}
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet, Default)]
 struct SnapshotInfoLabels {
     repo_name: String,
     repo_id: String,
@@ -68,6 +74,17 @@ struct SnapshotLabels {
 
 struct Metrics {
     rustic_repository_info: Family<RepositoryInfoLabels, Gauge>,
+    rustic_repository_snapshot_count: Family<RepositoryLabels, Gauge>,
+    rustic_repository_latest_snapshot_info: Family<SnapshotInfoLabels, Gauge>,
+    rustic_repository_latest_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_repository_latest_snapshot_backup_start_timestamp:
+        Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_repository_latest_snapshot_backup_end_timestamp:
+        Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_repository_latest_snapshot_backup_duration_seconds:
+        Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
+    rustic_repository_latest_snapshot_files_total: Family<SnapshotLabels, Gauge>,
+    rustic_repository_latest_snapshot_size_bytes: Family<SnapshotLabels, Gauge>,
     rustic_snapshot_info: Family<SnapshotInfoLabels, Gauge>,
     rustic_snapshot_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
     rustic_snapshot_backup_start_timestamp: Family<SnapshotLabels, Gauge<f64, AtomicU64>>,
@@ -210,6 +227,14 @@ impl Collector for RusticCollector {
         let repo_config = repo.config();
         let metrics = Metrics {
             rustic_repository_info: Family::default(),
+            rustic_repository_snapshot_count: Family::default(),
+            rustic_repository_latest_snapshot_info: Family::default(),
+            rustic_repository_latest_snapshot_timestamp: Family::default(),
+            rustic_repository_latest_snapshot_backup_start_timestamp: Family::default(),
+            rustic_repository_latest_snapshot_backup_end_timestamp: Family::default(),
+            rustic_repository_latest_snapshot_backup_duration_seconds: Family::default(),
+            rustic_repository_latest_snapshot_files_total: Family::default(),
+            rustic_repository_latest_snapshot_size_bytes: Family::default(),
             rustic_snapshot_info: Family::default(),
             rustic_snapshot_timestamp: Family::default(),
             rustic_snapshot_backup_end_timestamp: Family::default(),
@@ -218,6 +243,8 @@ impl Collector for RusticCollector {
             rustic_snapshot_files_total: Family::default(),
             rustic_snapshot_size_bytes: Family::default(),
         };
+
+        let snapshots = self.snapshots.load();
 
         // set repository metrics
         metrics
@@ -229,8 +256,21 @@ impl Collector for RusticCollector {
             })
             .set(1);
 
+        metrics
+            .rustic_repository_snapshot_count
+            .get_or_create(&RepositoryLabels {
+                repo_name: self.backup.name.clone(),
+                repo_id: repo_config.id.to_string(),
+            })
+            .set(snapshots.len() as i64);
+
         // set snapshot metrics
-        for snapshot in &**self.snapshots.load() {
+        let latest_snapshot_id = snapshots
+            .iter()
+            .max_by_key(|s| s.time.timestamp())
+            .map(|s| s.id);
+
+        for snapshot in &**snapshots {
             let snapshot_info_labels = SnapshotInfoLabels {
                 repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),
@@ -241,7 +281,6 @@ impl Collector for RusticCollector {
                 username: snapshot.username.to_string(),
                 program_version: snapshot.program_version.to_string(),
             };
-
             let snapshot_labels = SnapshotLabels {
                 repo_name: self.backup.name.clone(),
                 repo_id: repo_config.id.to_string(),
@@ -257,6 +296,18 @@ impl Collector for RusticCollector {
                 .rustic_snapshot_timestamp
                 .get_or_create(&snapshot_labels)
                 .set(snapshot.time.timestamp().as_microsecond() as f64 / 1e6);
+
+            if latest_snapshot_id.as_ref() == Some(&snapshot.id) {
+                metrics
+                    .rustic_repository_latest_snapshot_info
+                    .get_or_create(&snapshot_info_labels)
+                    .set(1);
+
+                metrics
+                    .rustic_repository_latest_snapshot_timestamp
+                    .get_or_create(&snapshot_labels)
+                    .set(snapshot.time.timestamp().as_microsecond() as f64 / 1e6);
+            }
 
             // skip current iteration if snapshot summary having no data
             if snapshot.summary.is_none() {
@@ -299,6 +350,38 @@ impl Collector for RusticCollector {
                         .unwrap_or(0.0)
                         / 1e6,
                 );
+
+            if latest_snapshot_id.as_ref() == Some(&snapshot.id) {
+                metrics
+                    .rustic_repository_latest_snapshot_files_total
+                    .get_or_create(&snapshot_labels)
+                    .set(summary.total_files_processed as i64);
+
+                metrics
+                    .rustic_repository_latest_snapshot_size_bytes
+                    .get_or_create(&snapshot_labels)
+                    .set(summary.total_bytes_processed as i64);
+
+                metrics
+                    .rustic_repository_latest_snapshot_backup_start_timestamp
+                    .get_or_create(&snapshot_labels)
+                    .set(summary.backup_start.timestamp().as_microsecond() as f64 / 1e6);
+
+                metrics
+                    .rustic_repository_latest_snapshot_backup_end_timestamp
+                    .get_or_create(&snapshot_labels)
+                    .set(summary.backup_end.timestamp().as_microsecond() as f64 / 1e6);
+
+                metrics
+                    .rustic_repository_latest_snapshot_backup_duration_seconds
+                    .get_or_create(&snapshot_labels)
+                    .set(
+                        (summary.backup_end.clone() - summary.backup_start.clone())
+                            .total(Unit::Microsecond)
+                            .unwrap_or(0.0)
+                            / 1e6,
+                    );
+            }
         }
 
         //-- Encode
@@ -309,6 +392,14 @@ impl Collector for RusticCollector {
                 "Repository information.",
                 None,
                 metrics.rustic_repository_info.metric_type(),
+            )?)?;
+        metrics
+            .rustic_repository_snapshot_count
+            .encode(encoder.encode_descriptor(
+                "rustic_repository_snapshot_count",
+                "Repository snapshot number",
+                None,
+                metrics.rustic_repository_snapshot_count.metric_type(),
             )?)?;
         metrics
             .rustic_snapshot_info
@@ -342,7 +433,6 @@ impl Collector for RusticCollector {
                 None,
                 metrics.rustic_snapshot_size_bytes.metric_type(),
             )?)?;
-
         metrics
             .rustic_snapshot_backup_start_timestamp
             .encode(encoder.encode_descriptor(
@@ -369,6 +459,84 @@ impl Collector for RusticCollector {
                     .metric_type(),
             )?,
         )?;
+        metrics
+            .rustic_repository_latest_snapshot_info
+            .encode(encoder.encode_descriptor(
+                "rustic_repository_latest_snapshot_info",
+                "Latest snapshot inforamation.",
+                None,
+                metrics.rustic_repository_latest_snapshot_info.metric_type(),
+            )?)?;
+        metrics
+            .rustic_repository_latest_snapshot_files_total
+            .encode(
+                encoder.encode_descriptor(
+                    "rustic_repository_latest_snapshot_files_total",
+                    "Total files in the latest snapshot.",
+                    None,
+                    metrics
+                        .rustic_repository_latest_snapshot_files_total
+                        .metric_type(),
+                )?,
+            )?;
+        metrics.rustic_repository_latest_snapshot_timestamp.encode(
+            encoder.encode_descriptor(
+                "rustic_repository_latest_snapshot_timestamp",
+                "Latest snapshot creation time in unix timestamp.",
+                None,
+                metrics
+                    .rustic_repository_latest_snapshot_timestamp
+                    .metric_type(),
+            )?,
+        )?;
+        metrics
+            .rustic_repository_latest_snapshot_size_bytes
+            .encode(
+                encoder.encode_descriptor(
+                    "rustic_repository_latest_snapshot_size_bytes",
+                    "Latest snapshot size in bytes.",
+                    None,
+                    metrics
+                        .rustic_repository_latest_snapshot_size_bytes
+                        .metric_type(),
+                )?,
+            )?;
+        metrics
+            .rustic_repository_latest_snapshot_backup_start_timestamp
+            .encode(
+                encoder.encode_descriptor(
+                    "rustic_repository_latest_snapshot_backup_start_timestamp",
+                    "Backup start time of the latest snapshot in unix timestamp.",
+                    None,
+                    metrics
+                        .rustic_repository_latest_snapshot_backup_start_timestamp
+                        .metric_type(),
+                )?,
+            )?;
+        metrics
+            .rustic_repository_latest_snapshot_backup_end_timestamp
+            .encode(
+                encoder.encode_descriptor(
+                    "rustic_repository_latest_snapshot_backup_end_timestamp",
+                    "Backup finished time of the latest snapshot in unix timestamp.",
+                    None,
+                    metrics
+                        .rustic_repository_latest_snapshot_backup_end_timestamp
+                        .metric_type(),
+                )?,
+            )?;
+        metrics
+            .rustic_repository_latest_snapshot_backup_duration_seconds
+            .encode(
+                encoder.encode_descriptor(
+                    "rustic_repository_latest_snapshot_backup_duration_seconds",
+                    "Backup duration of the latest snapshot.",
+                    None,
+                    metrics
+                        .rustic_repository_latest_snapshot_backup_duration_seconds
+                        .metric_type(),
+                )?,
+            )?;
 
         Ok(())
     }

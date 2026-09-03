@@ -39,7 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Build
-        uses: houseabsolute/actions-rust-cross@a8cc74d61047fa553b4e908b4b10e70029f00ca6 # v1.0.6
+        uses: houseabsolute/actions-rust-cross@21b0f18dc621b25bfae556ff2791fca4173121e8 # v1.0.8
         with:
           command: build
           target: ${{ matrix.platform.target }}

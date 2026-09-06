@@ -1,0 +1,190 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      // rust core - group
+      "groupName": "rust core",
+      "separateMultipleMinor": true,
+      "semanticCommitScope": "deps",
+      "matchDatasources": ["crate"],
+      "matchDepNames": [
+        "rustic_core",
+        "rustic_backend"
+      ]
+    },
+    // rust core - automerge
+    {
+      "groupName": "rust core",
+      "automerge": true,
+      "matchDatasources": [
+        "crate"
+      ],
+      "matchDepNames": [
+        "rustic_core",
+        "rustic_backend"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ]
+    },
+    {
+      // rust utils - group
+      "groupName": "rust utils",
+      "semanticCommitScope": "deps",
+      "matchDatasources": ["crate"],
+      "matchDepNames": [
+        "clap",
+        "axum",
+        "prometheus-client",
+        "jiff",
+        "serde",
+        "tokio",
+        "toml",
+        "regex",
+        "arc-swap",
+        "tracing",
+        "tracing-subscriber",
+        "thiserror"
+      ]
+    },
+    // rust utils - automerge
+    {
+      "groupName": "rust utils",
+      "automerge": true,
+      "matchDatasources": ["crate"],
+      "matchDepNames": [
+        "clap",
+        "axum",
+        "prometheus-client",
+        "jiff",
+        "serde",
+        "tokio",
+        "toml",
+        "regex",
+        "arc-swap",
+        "tracing",
+        "tracing-subscriber",
+        "thiserror"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      // python test - group
+      "groupName": "python test",
+      "semanticCommitScope": "test",
+      "matchDatasources": ["pypi"],
+      "matchDepNames": [
+        "testcontainers",
+        "pytest",
+        "pytest-xdist",
+        "requests",
+        "prometheus-client"
+      ]
+    },
+    {
+      // python test - automerge
+      "schedule": ["* * 1-5 * *"],
+      "groupName": "python test",
+      "automerge": true,
+      "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDepNames": [
+        "testcontainers",
+        "pytest",
+        "pytest-xdist",
+        "requests",
+        "prometheus-client"
+      ]
+    },
+    {
+      // docker - group
+      "groupName": "docker",
+      "semanticCommitScope": "docker",
+      "matchDatasources": ["docker"]
+    },
+    {
+      // docker - automerge
+      "schedule": ["* * 1-5 * *"],
+      "groupName": "docker",
+      "automerge": true,
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      // gitHub action - group
+      "groupName": "github action",
+      "semanticCommitScope": "misc",
+      "matchDatasources": ["github-tags"],
+      "matchDepNames": [
+        "actions/checkout",
+        "actions/download-artifact",
+        "actions/upload-artifact",
+        "astral-sh/setup-uv",
+        "codecov/codecov-action",
+        "dprint/check",
+        "docker/build-push-action",
+        "docker/login-action",
+        "docker/setup-buildx-action",
+        "dtolnay/rust-toolchain",
+        "EmbarkStudios/cargo-deny-action",
+        "houseabsolute/actions-rust-cross",
+        "softprops/action-gh-release",
+        "Swatinem/rust-cache",
+        "taiki-e/install-action"
+      ]
+    },
+    {
+      // github action - automerge
+      "schedule": ["* * 1-5 * *"],
+      "groupName": "github action",
+      "automerge": true,
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "matchFileNames": [".github/workflows/**"],
+      "matchDatasources": ["github-tags"],
+      "matchDepNames": [
+        "actions/checkout",
+        "actions/download-artifact",
+        "actions/upload-artifact",
+        "astral-sh/setup-uv",
+        "codecov/codecov-action",
+        "dprint/check",
+        "docker/build-push-action",
+        "docker/login-action",
+        "docker/setup-buildx-action",
+        "dtolnay/rust-toolchain",
+        "EmbarkStudios/cargo-deny-action",
+        "houseabsolute/actions-rust-cross",
+        "softprops/action-gh-release",
+        "Swatinem/rust-cache",
+        "taiki-e/install-action"
+      ]
+    },
+    {
+      // terraform - group
+      "groupName": "terraform",
+      "semanticCommitScope": "misc",
+      "matchDatasources": ["terraform-provider", "github-releases"],
+      "matchPackageNames": [
+        "hashicorp/terraform",
+        "hashicorp/aws",
+        "integrations/github"
+      ]
+    },
+    // terraform - automerge
+    {
+      "schedule": ["* * 1-5 * *"],
+      "groupName": "terraform",
+      "automerge": true,
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDatasources": ["terraform-provider", "github-releases"],
+      "matchPackageNames": [
+        "hashicorp/terraform",
+        "hashicorp/aws",
+        "integrations/github"
+      ]
+    }
+  ]
+}

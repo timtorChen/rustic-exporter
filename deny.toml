@@ -70,9 +70,12 @@ feature-depth = 1
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-  # FIXME!: See https://github.com/RustCrypto/RSA/issues/19#issuecomment-1822995643.
+  #! FIXME: See https://github.com/RustCrypto/RSA/issues/19#issuecomment-1822995643.
   # There is no workaround available yet.
   "RUSTSEC-2023-0071",
+  #! FIXME: Chrono is pulled in by OpenDAL's FTP service through rustic_backend.
+  # No safe chrono upgrade is available; remove this exception once upstream replaces it.
+  "RUSTSEC-2026-0543",
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
@@ -95,6 +98,7 @@ allow = [
     "Unicode-3.0",
     "CDLA-Permissive-2.0",
     "BSD-3-Clause",
+    "BSD-2-Clause",
     "MPL-2.0",
     "CC0-1.0",
     "Zlib"

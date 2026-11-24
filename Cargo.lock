@@ -3758,7 +3758,7 @@ dependencies = [
  "arc-swap",
  "axum",
  "clap",
- "jiff 0.2.46",
+ "jiff 1.0.2",
  "prometheus-client",
  "regex",
  "rustic_backend",
